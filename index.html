@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>El Club del Truco – Celular</title>
+<title>El Club del Truco – Celular Completo</title>
 <style>
 body { background:#0b3d2e; color:#fff; font-family:Georgia, serif; text-align:center; margin:0; }
 h1 { margin:15px 0; }
@@ -54,7 +54,7 @@ h1 { margin:15px 0; }
 </div>
 
 <script>
-// ===== Datos y variables =====
+// ===== Datos =====
 const cartasJugador = [
   {id:'jugador1', n:'1', p:'Espada', v:14},
   {id:'jugador2', n:'7', p:'Oro', v:11},
@@ -76,11 +76,12 @@ const logDiv = document.getElementById('log');
 const pJ = document.getElementById('pJugador');
 const pR = document.getElementById('pRival');
 
-// Funciones
+// ===== Funciones =====
 function jugar(cartaJugador, cartaRival){
   document.getElementById('mesaJ1').textContent = simbolos[cartaJugador.p]+' '+cartaJugador.n;
   document.getElementById('mesaR1').textContent = simbolos[cartaRival.p]+' '+cartaRival.n;
   
+  // Comparación simple de valores
   if(cartaJugador.v > cartaRival.v){
     puntosJugador++; logDiv.textContent="Ganaste la mano";
   } else if(cartaRival.v > cartaJugador.v){
@@ -95,36 +96,42 @@ function jugar(cartaJugador, cartaRival){
   setTimeout(()=>{
     if(puntosJugador>=30){ logDiv.textContent="¡GANASTE EL JUEGO!"; reiniciar(); }
     else if(puntosRival>=30){ logDiv.textContent="¡EL RIVAL GANA!"; reiniciar(); }
+    else { siguienteMano(); }
   },1000);
+}
+
+function siguienteMano(){
+  // Reorganizamos cartas
+  document.getElementById('mesaJ1').textContent='';
+  document.getElementById('mesaR1').textContent='';
+  // Para prueba, el rival siempre juega en orden
+  cartasJugador.forEach((c,i)=>{
+    document.getElementById(c.id).textContent = simbolos[c.p]+' '+c.n;
+  });
+  cartasRival.forEach((c,i)=>{
+    document.getElementById(c.id).textContent = '🂠';
+  });
+  logDiv.textContent='Siguiente mano';
 }
 
 function reiniciar(){
   puntosJugador=0; puntosRival=0;
   pJ.textContent=0; pR.textContent=0;
   logDiv.textContent='Se reinicia el juego';
-  // Restaurar cartas visibles
-  document.getElementById('jugador1').textContent='🗡️ 1';
-  document.getElementById('jugador2').textContent='🪙 7';
-  document.getElementById('jugador3').textContent='🍷 3';
-  document.getElementById('rival1').textContent='🂠';
-  document.getElementById('rival2').textContent='🂠';
-  document.getElementById('rival3').textContent='🂠';
-  document.getElementById('mesaJ1').textContent='';
-  document.getElementById('mesaR1').textContent='';
+  siguienteMano();
 }
 
-// Botones cartas (simulado para prueba)
+// ===== Botones de cartas =====
 document.getElementById('jugador1').addEventListener('click',()=>jugar(cartasJugador[0], cartasRival[0]));
 document.getElementById('jugador2').addEventListener('click',()=>jugar(cartasJugador[1], cartasRival[1]));
 document.getElementById('jugador3').addEventListener('click',()=>jugar(cartasJugador[2], cartasRival[2]));
 
-// Botones de Truco y Envido
+// ===== Botones de Truco y Envido =====
 document.getElementById('btnTruco').addEventListener('click',()=>{ logDiv.textContent='Cantaste Truco'; });
 document.getElementById('btnEnvido').addEventListener('click',()=>{ logDiv.textContent='Cantaste Envido'; });
 document.getElementById('btnQuiero').addEventListener('click',()=>{ logDiv.textContent='Cantaste Quiero'; });
 document.getElementById('btnNoQuiero').addEventListener('click',()=>{ logDiv.textContent='Cantaste No quiero'; });
 document.getElementById('btnMazo').addEventListener('click',reiniciar);
-
 </script>
 </body>
 </html>
