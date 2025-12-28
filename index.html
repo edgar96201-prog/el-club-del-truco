@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>El Club del Truco – Definitivo</title>
+<title>El Club del Truco – Definitivo Aleatorio</title>
 <style>
 body { background:#0b3d2e; color:#fff; font-family:Georgia, serif; text-align:center; margin:0; }
 h1 { margin:15px 0; }
@@ -11,35 +11,36 @@ h1 { margin:15px 0; }
 .carta { width:80px; height:120px; background:#fdf6e3; color:#000; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; text-align:center; line-height:1.2; }
 .rival .carta { background:#999; cursor: default; }
 .botones button { margin:5px; padding:10px 15px; font-size:15px; border-radius:8px; border:none; cursor:pointer; }
-.log { background:#0e6655; padding:10px; border-radius:10px; min-height:60px; margin-top:10px;}
+.log { background:#0e6655; padding:10px; border-radius:10px; min-height:80px; margin-top:10px;}
 </style>
 </head>
 <body>
 
-<h1>🃏 El Club del Truco – Definitivo</h1>
+<h1>🃏 El Club del Truco – Aleatorio Definitivo</h1>
 
 <div class="mesa">
 <h3>Puntaje</h3>
-<p>Vos: <span id="pJugador">0</span> | Rival: <span id="pRival">0</span></p>
+<p>Tu equipo: <span id="pEquipo">0</span> | Equipo rival: <span id="pRival">0</span></p>
 
-<h3>Rival</h3>
+<h3>Rivales</h3>
 <div class="cartas rival" id="manoRival">
   <div class="carta" id="rival1">🂠</div>
   <div class="carta" id="rival2">🂠</div>
-  <div class="carta" id="rival3">🂠</div>
 </div>
 
 <h3>Mesa</h3>
 <div class="cartas" id="mesa">
   <div class="carta" id="mesaJ1"></div>
+  <div class="carta" id="mesaJ2"></div>
   <div class="carta" id="mesaR1"></div>
+  <div class="carta" id="mesaR2"></div>
 </div>
 
 <h3>Tu mano</h3>
 <div class="cartas" id="manoJugador">
-  <div class="carta" id="jugador1">🗡️ 1</div>
-  <div class="carta" id="jugador2">🪙 7</div>
-  <div class="carta" id="jugador3">🍷 3</div>
+  <div class="carta" id="jugador1"></div>
+  <div class="carta" id="jugador2"></div>
+  <div class="carta" id="jugador3"></div>
 </div>
 
 <div class="log" id="log"></div>
@@ -57,121 +58,145 @@ h1 { margin:15px 0; }
 </div>
 
 <script>
-// ===== Datos =====
-let cartasJugador = [
-  {id:'jugador1', n:'1', p:'Espada', v:14},
-  {id:'jugador2', n:'7', p:'Oro', v:11},
-  {id:'jugador3', n:'3', p:'Copa', v:10}
-];
-
-let cartasRival = [
-  {id:'rival1', n:'2', p:'Espada', v:9},
-  {id:'rival2', n:'7', p:'Basto', v:4},
-  {id:'rival3', n:'1', p:'Oro', v:8}
+// ===== Baraja y valores =====
+const baraja = [
+  {n:'1',p:'Espada',v:14},{n:'1',p:'Basto',v:13},{n:'7',p:'Espada',v:12},{n:'7',p:'Oro',v:11},
+  {n:'3',p:'Espada',v:10},{n:'3',p:'Basto',v:10},{n:'3',p:'Oro',v:10},{n:'3',p:'Copa',v:10},
+  {n:'2',p:'Espada',v:9},{n:'2',p:'Basto',v:9},{n:'2',p:'Oro',v:9},{n:'2',p:'Copa',v:9},
+  {n:'1',p:'Oro',v:8},{n:'1',p:'Copa',v:8},{n:'12',p:'Espada',v:7},{n:'12',p:'Basto',v:7},
+  {n:'12',p:'Oro',v:7},{n:'12',p:'Copa',v:7},{n:'11',p:'Espada',v:6},{n:'11',p:'Basto',v:6},
+  {n:'11',p:'Oro',v:6},{n:'11',p:'Copa',v:6},{n:'10',p:'Espada',v:5},{n:'10',p:'Basto',v:5},
+  {n:'10',p:'Oro',v:5},{n:'10',p:'Copa',v:5},{n:'7',p:'Basto',v:4},{n:'7',p:'Copa',v:4},
+  {n:'6',p:'Espada',v:3},{n:'6',p:'Basto',v:3},{n:'6',p:'Oro',v:3},{n:'6',p:'Copa',v:3},
+  {n:'5',p:'Espada',v:2},{n:'5',p:'Basto',v:2},{n:'5',p:'Oro',v:2},{n:'5',p:'Copa',v:2},
+  {n:'4',p:'Espada',v:1},{n:'4',p:'Basto',v:1},{n:'4',p:'Oro',v:1},{n:'4',p:'Copa',v:1}
 ];
 
 const simbolos = { 'Espada':'🗡️','Basto':'⚾','Oro':'🪙','Copa':'🍷' };
 
-let puntosJugador=0, puntosRival=0;
-let trucoNivel=0; // 0=sin truco,1=Truco,2=Retruco,3=Vale4
+let puntosEquipo=0, puntosRival=0;
+let trucoNivel=0;
 let envidoActivo=false;
 let florActivo=false;
 let envidoPuntos=2, florPuntos=3;
 
+let manoJugador=[], manoCompañero=[], manoRival=[];
+
 // DOM
 const logDiv = document.getElementById('log');
-const pJ = document.getElementById('pJugador');
+const pE = document.getElementById('pEquipo');
 const pR = document.getElementById('pRival');
 
 // ===== Funciones =====
-function jugar(cartaJugador){
-  if(cartasRival.length===0) return; // Evitar error
-  const idxRival = Math.floor(Math.random() * cartasRival.length);
-  const cartaRival = cartasRival.splice(idxRival,1)[0];
+function barajar(array){
+  let a = array.slice();
+  for(let i=a.length-1;i>0;i--){
+    let j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function repartirMano(){
+  let barajaAct = barajar(baraja);
+  manoJugador = barajaAct.splice(0,3);
+  manoCompañero = barajaAct.splice(0,3);
+  manoRival = barajaAct.splice(0,4);
+
+  for(let i=0;i<3;i++){
+    document.getElementById('jugador'+(i+1)).textContent = simbolos[manoJugador[i].p]+' '+manoJugador[i].n;
+  }
+
+  document.getElementById('mesaJ1').textContent='';
+  document.getElementById('mesaJ2').textContent='';
+  document.getElementById('mesaR1').textContent='🂠';
+  document.getElementById('mesaR2').textContent='🂠';
+
+  logDiv.textContent='Se repartieron cartas aleatorias';
+}
+
+// ===== Juego de cartas =====
+function jugarCarta(indice){
+  let cartaJugador = manoJugador.splice(indice,1)[0];
+  let cartaComp = manoCompañero.shift();
+  let cartaR1 = manoRival.splice(0,1)[0];
+  let cartaR2 = manoRival.splice(0,1)[0];
 
   document.getElementById('mesaJ1').textContent = simbolos[cartaJugador.p]+' '+cartaJugador.n;
-  document.getElementById('mesaR1').textContent = simbolos[cartaRival.p]+' '+cartaRival.n;
+  document.getElementById('mesaJ2').textContent = simbolos[cartaComp.p]+' '+cartaComp.n;
+  document.getElementById('mesaR1').textContent = simbolos[cartaR1.p]+' '+cartaR1.n;
+  document.getElementById('mesaR2').textContent = simbolos[cartaR2.p]+' '+cartaR2.n;
 
-  // Comparar cartas
+  // Comparar pares
+  let equipoGana=0, rivalGana=0;
+  [[cartaJugador,cartaR1],[cartaComp,cartaR2]].forEach(par=>{
+    if(par[0].v>par[1].v) equipoGana++;
+    else if(par[1].v>par[0].v) rivalGana++;
+  });
+
   let puntosMano = trucoNivel || 1;
-  if(cartaJugador.v > cartaRival.v){ puntosJugador+=puntosMano; logDiv.textContent=`Ganaste la mano +${puntosMano}`; }
-  else if(cartaRival.v > cartaJugador.v){ puntosRival+=puntosMano; logDiv.textContent=`Rival gana la mano +${puntosMano}`; }
+  if(equipoGana>rivalGana){ puntosEquipo+=puntosMano; logDiv.textContent='Tu equipo gana la mano +'+puntosMano; }
+  else if(rivalGana>equipoGana){ puntosRival+=puntosMano; logDiv.textContent='Rival gana la mano +'+puntosMano; }
   else { logDiv.textContent='Mano parda'; }
 
-  pJ.textContent=puntosJugador;
+  pE.textContent=puntosEquipo;
   pR.textContent=puntosRival;
 
-  cartasJugador.splice(cartasJugador.indexOf(cartaJugador),1);
-  document.getElementById(cartaJugador.id).textContent='';
-
-  trucoNivel=0; // Reset truco después de mano
+  trucoNivel=0;
 
   setTimeout(()=>{
-    if(puntosJugador>=30){ logDiv.textContent="¡GANASTE EL JUEGO!"; reiniciar(); }
+    if(puntosEquipo>=30){ logDiv.textContent="¡GANASTE EL JUEGO!"; reiniciar(); }
     else if(puntosRival>=30){ logDiv.textContent="¡EL RIVAL GANA!"; reiniciar(); }
-    else { siguienteMano(); }
-  },800);
+    else siguienteMano();
+  },1200);
 }
 
 function siguienteMano(){
   document.getElementById('mesaJ1').textContent='';
-  document.getElementById('mesaR1').textContent='';
+  document.getElementById('mesaJ2').textContent='';
+  document.getElementById('mesaR1').textContent='🂠';
+  document.getElementById('mesaR2').textContent='🂠';
   logDiv.textContent='Siguiente mano';
 }
 
 function reiniciar(){
-  puntosJugador=0; puntosRival=0;
-  pJ.textContent=0; pR.textContent=0;
-  logDiv.textContent='Se reinicia el juego';
+  puntosEquipo=0; puntosRival=0;
+  pE.textContent=0; pR.textContent=0;
   repartirMano();
 }
 
-function repartirMano(){
-  cartasJugador = [
-    {id:'jugador1', n:'1', p:'Espada', v:14},
-    {id:'jugador2', n:'7', p:'Oro', v:11},
-    {id:'jugador3', n:'3', p:'Copa', v:10}
-  ];
-  cartasRival = [
-    {id:'rival1', n:'2', p:'Espada', v:9},
-    {id:'rival2', n:'7', p:'Basto', v:4},
-    {id:'rival3', n:'1', p:'Oro', v:8}
-  ];
-
-  document.getElementById('jugador1').textContent='🗡️ 1';
-  document.getElementById('jugador2').textContent='🪙 7';
-  document.getElementById('jugador3').textContent='🍷 3';
-
-  document.getElementById('rival1').textContent='🂠';
-  document.getElementById('rival2').textContent='🂠';
-  document.getElementById('rival3').textContent='🂠';
-
-  document.getElementById('mesaJ1').textContent='';
-  document.getElementById('mesaR1').textContent='';
-}
-
 // ===== Botones cartas =====
-document.getElementById('jugador1').addEventListener('click',()=>jugar(cartasJugador[0]));
-document.getElementById('jugador2').addEventListener('click',()=>jugar(cartasJugador[1]));
-document.getElementById('jugador3').addEventListener('click',()=>jugar(cartasJugador[2]));
+document.getElementById('jugador1').addEventListener('click',()=>jugarCarta(0));
+document.getElementById('jugador2').addEventListener('click',()=>jugarCarta(1));
+document.getElementById('jugador3').addEventListener('click',()=>jugarCarta(2));
 
 // ===== Botones Truco / Envido / Flor =====
 document.getElementById('btnTruco').addEventListener('click',()=>{ trucoNivel=1; logDiv.textContent='Cantaste Truco'; });
 document.getElementById('btnRetruco').addEventListener('click',()=>{ if(trucoNivel>=1){ trucoNivel=2; logDiv.textContent='Cantaste Retruco'; }});
 document.getElementById('btnValeCuatro').addEventListener('click',()=>{ if(trucoNivel>=2){ trucoNivel=3; logDiv.textContent='Cantaste Vale cuatro'; }});
-document.getElementById('btnEnvido').addEventListener('click',()=>{ envidoActivo=true; logDiv.textContent='Cantaste Envido'; });
-document.getElementById('btnFlor').addEventListener('click',()=>{ florActivo=true; logDiv.textContent='Cantaste Flor'; });
+document.getElementById('btnEnvido').addEventListener('click',()=>{
+  envidoActivo=true;
+  // Rival responde según suma de cartas
+  let rivalSuma = (manoRival[0]?.v||0) + (manoRival[1]?.v||0);
+  let respuesta = rivalSuma>=20?'Quiero':'No quiero';
+  logDiv.textContent=`Cantaste Envido - Rival dice: ${respuesta}`;
+  if(respuesta==='Quiero'){ puntosEquipo+=envidoPuntos; pE.textContent=puntosEquipo; } else { puntosRival+=envidoPuntos; pR.textContent=puntosRival; }
+});
+document.getElementById('btnFlor').addEventListener('click',()=>{
+  florActivo=true;
+  logDiv.textContent='Cantaste Flor';
+});
 
-// ===== Botones Quiero / No quiero =====
+// Quiero / No quiero
 document.getElementById('btnQuiero').addEventListener('click',()=>{
-  if(envidoActivo){ puntosJugador+=envidoPuntos; pJ.textContent=puntosJugador; logDiv.textContent='Aceptaste Envido +'+envidoPuntos; envidoActivo=false; }
-  else if(florActivo){ puntosJugador+=florPuntos; pJ.textContent=puntosJugador; logDiv.textContent='Aceptaste Flor +'+florPuntos; florActivo=false; }
+  if(envidoActivo){ puntosEquipo+=envidoPuntos; pE.textContent=puntosEquipo; envidoActivo=false; logDiv.textContent='Aceptaste Envido'; }
+  if(florActivo){ puntosEquipo+=florPuntos; pE.textContent=puntosEquipo; florActivo=false; logDiv.textContent='Aceptaste Flor'; }
 });
 document.getElementById('btnNoQuiero').addEventListener('click',()=>{
-  if(envidoActivo){ logDiv.textContent='No quisiste Envido'; envidoActivo=false; puntosRival+=envidoPuntos; pR.textContent=puntosRival; }
-  else if(florActivo){ logDiv.textContent='No quisiste Flor'; florActivo=false; puntosRival+=florPuntos; pR.textContent=puntosRival; }
+  if(envidoActivo){ puntosRival+=envidoPuntos; pR.textContent=puntosRival; envidoActivo=false; logDiv.textContent='No quisiste Envido'; }
+  if(florActivo){ puntosRival+=florPuntos; pR.textContent=puntosRival; florActivo=false; logDiv.textContent='No quisiste Flor'; }
 });
-document.getElementById('btnMazo').addEventListener('click',reiniciar);
+document.getElementById('btnMazo').addEventListener('click', reiniciar);
 
 repartirMano();
 </script>
