@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>El Club del Truco – 2vs2 Definitivo</title>
+<title>El Club del Truco – 2vs2 Criollo</title>
 <style>
 body { background:#0b3d2e; color:#fff; font-family:Georgia, serif; text-align:center; margin:0; }
 h1 { margin:15px 0; }
@@ -16,7 +16,7 @@ h1 { margin:15px 0; }
 </head>
 <body>
 
-<h1>🃏 El Club del Truco – 2vs2 Definitivo</h1>
+<h1>🃏 El Club del Truco – 2vs2 Criollo</h1>
 
 <div class="mesa">
 <h3>Puntaje</h3>
@@ -58,6 +58,12 @@ h1 { margin:15px 0; }
 </div>
 
 <script>
+// ===== Sonidos =====
+function reproducirSonido(nombre){
+  const audio = new Audio(nombre);
+  audio.play();
+}
+
 // ===== Baraja y valores =====
 const baraja = [
   {n:'1',p:'Espada',v:14},{n:'1',p:'Basto',v:13},{n:'7',p:'Espada',v:12},{n:'7',p:'Oro',v:11},
@@ -71,7 +77,6 @@ const baraja = [
   {n:'5',p:'Espada',v:2},{n:'5',p:'Basto',v:2},{n:'5',p:'Oro',v:2},{n:'5',p:'Copa',v:2},
   {n:'4',p:'Espada',v:1},{n:'4',p:'Basto',v:1},{n:'4',p:'Oro',v:1},{n:'4',p:'Copa',v:1}
 ];
-
 const simbolos = { 'Espada':'🗡️','Basto':'⚾','Oro':'🪙','Copa':'🍷' };
 
 let puntosEquipo=0, puntosRival=0;
@@ -145,8 +150,8 @@ function jugarCarta(indice){
   trucoNivel=0;
 
   setTimeout(()=>{
-    if(puntosEquipo>=30){ logDiv.textContent="¡GANASTE EL JUEGO!"; reiniciar(); }
-    else if(puntosRival>=30){ logDiv.textContent="¡EL RIVAL GANA!"; reiniciar(); }
+    if(puntosEquipo>=30){ reproducirSonido('mazo.mp3'); logDiv.textContent="¡GANASTE EL JUEGO!"; reiniciar(); }
+    else if(puntosRival>=30){ reproducirSonido('mazo.mp3'); logDiv.textContent="¡EL RIVAL GANA!"; reiniciar(); }
     else siguienteMano();
   },1200);
 }
@@ -170,32 +175,34 @@ document.getElementById('jugador1').addEventListener('click',()=>jugarCarta(0));
 document.getElementById('jugador2').addEventListener('click',()=>jugarCarta(1));
 document.getElementById('jugador3').addEventListener('click',()=>jugarCarta(2));
 
-// ===== Botones Truco / Envido / Flor =====
-document.getElementById('btnTruco').addEventListener('click',()=>{ trucoNivel=1; logDiv.textContent='Cantaste Truco'; });
-document.getElementById('btnRetruco').addEventListener('click',()=>{ if(trucoNivel>=1){ trucoNivel=2; logDiv.textContent='Cantaste Retruco'; }});
-document.getElementById('btnValeCuatro').addEventListener('click',()=>{ if(trucoNivel>=2){ trucoNivel=3; logDiv.textContent='Cantaste Vale cuatro'; }});
+// ===== Botones Truco / Envido / Flor con sonidos =====
+document.getElementById('btnTruco').addEventListener('click',()=>{ reproducirSonido('truco.mp3'); trucoNivel=1; logDiv.textContent='Cantaste Truco'; });
+document.getElementById('btnRetruco').addEventListener('click',()=>{ if(trucoNivel>=1){ reproducirSonido('retruco.mp3'); trucoNivel=2; logDiv.textContent='Cantaste Retruco'; }});
+document.getElementById('btnValeCuatro').addEventListener('click',()=>{ if(trucoNivel>=2){ reproducirSonido('vale4.mp3'); trucoNivel=3; logDiv.textContent='Cantaste Vale cuatro'; }});
 document.getElementById('btnEnvido').addEventListener('click',()=>{
+  reproducirSonido('envido.mp3'); 
   envidoActivo=true;
   let rivalSuma = (manoRival[0]?.v||0) + (manoRival[1]?.v||0);
   let respuesta = rivalSuma>=20?'Quiero':'No quiero';
   logDiv.textContent=`Cantaste Envido - Rival dice: ${respuesta}`;
   if(respuesta==='Quiero'){ puntosEquipo+=envidoPuntos; pE.textContent=puntosEquipo; } else { puntosRival+=envidoPuntos; pR.textContent=puntosRival; }
 });
-document.getElementById('btnFlor').addEventListener('click',()=>{
-  florActivo=true;
-  logDiv.textContent='Cantaste Flor';
-});
+document.getElementById('btnFlor').addEventListener('click',()=>{ reproducirSonido('flor.mp3'); florActivo=true; logDiv.textContent='Cantaste Flor'; });
 
-// Quiero / No quiero
 document.getElementById('btnQuiero').addEventListener('click',()=>{
+  reproducirSonido('quiero.mp3');
   if(envidoActivo){ puntosEquipo+=envidoPuntos; pE.textContent=puntosEquipo; envidoActivo=false; logDiv.textContent='Aceptaste Envido'; }
   if(florActivo){ puntosEquipo+=florPuntos; pE.textContent=puntosEquipo; florActivo=false; logDiv.textContent='Aceptaste Flor'; }
 });
 document.getElementById('btnNoQuiero').addEventListener('click',()=>{
+  reproducirSonido('noquiero.mp3');
   if(envidoActivo){ puntosRival+=envidoPuntos; pR.textContent=puntosRival; envidoActivo=false; logDiv.textContent='No quisiste Envido'; }
   if(florActivo){ puntosRival+=florPuntos; pR.textContent=puntosRival; florActivo=false; logDiv.textContent='No quisiste Flor'; }
 });
-document.getElementById('btnMazo').addEventListener('click', reiniciar);
+document.getElementById('btnMazo').addEventListener('click',()=>{
+  reproducirSonido('mazo.mp3'); 
+  reiniciar();
+});
 
 repartirMano();
 </script>
