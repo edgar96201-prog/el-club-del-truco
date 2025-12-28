@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>El Club del Truco – 2vs2 Criollo</title>
+<title>El Club del Truco – 2vs2 Estratégico</title>
 <style>
 body { background:#0b3d2e; color:#fff; font-family:Georgia, serif; text-align:center; margin:0; }
 h1 { margin:15px 0; }
@@ -16,7 +16,7 @@ h1 { margin:15px 0; }
 </head>
 <body>
 
-<h1>🃏 El Club del Truco – 2vs2 Criollo</h1>
+<h1>🃏 El Club del Truco – 2vs2 Estratégico</h1>
 
 <div class="mesa">
 <h3>Puntaje</h3>
@@ -83,7 +83,7 @@ let puntosEquipo=0, puntosRival=0;
 let trucoNivel=0;
 let envidoActivo=false;
 let florActivo=false;
-let envidoPuntos=2, florPuntos=3;
+let rondaActual=0;
 
 let manoJugador=[], manoCompañero=[], manoRival=[];
 
@@ -117,11 +117,13 @@ function repartirMano(){
   document.getElementById('mesaR1').textContent='🂠';
   document.getElementById('mesaR2').textContent='🂠';
 
+  rondaActual=0;
   logDiv.textContent='Se repartieron cartas aleatorias';
 }
 
-// ===== Juego de cartas =====
+// ===== Juego de cartas por rondas =====
 function jugarCarta(indice){
+  if(rondaActual>=3) return;
   let cartaJugador = manoJugador.splice(indice,1)[0];
   let cartaComp = manoCompañero.shift();
   let cartaR1 = manoRival.splice(0,1)[0];
@@ -132,28 +134,31 @@ function jugarCarta(indice){
   document.getElementById('mesaR1').textContent = simbolos[cartaR1.p]+' '+cartaR1.n;
   document.getElementById('mesaR2').textContent = simbolos[cartaR2.p]+' '+cartaR2.n;
 
-  // Comparar pares
+  rondaActual++;
+
   let equipoGana=0, rivalGana=0;
   [[cartaJugador,cartaR1],[cartaComp,cartaR2]].forEach(par=>{
     if(par[0].v>par[1].v) equipoGana++;
     else if(par[1].v>par[0].v) rivalGana++;
   });
 
-  let puntosMano = trucoNivel || 1;
-  if(equipoGana>rivalGana){ puntosEquipo+=puntosMano; logDiv.textContent='Tu equipo gana la mano +'+puntosMano; }
-  else if(rivalGana>equipoGana){ puntosRival+=puntosMano; logDiv.textContent='Rival gana la mano +'+puntosMano; }
-  else { logDiv.textContent='Mano parda'; }
+  if(rondaActual===3){
+    let puntosMano = trucoNivel || 1;
+    if(equipoGana>rivalGana){ puntosEquipo+=puntosMano; logDiv.textContent='Tu equipo gana la mano +'+puntosMano; }
+    else if(rivalGana>equipoGana){ puntosRival+=puntosMano; logDiv.textContent='Rival gana la mano +'+puntosMano; }
+    else { logDiv.textContent='Mano parda'; }
 
-  pE.textContent=puntosEquipo;
-  pR.textContent=puntosRival;
+    pE.textContent=puntosEquipo;
+    pR.textContent=puntosRival;
 
-  trucoNivel=0;
+    trucoNivel=0;
 
-  setTimeout(()=>{
-    if(puntosEquipo>=30){ reproducirSonido('mazo.mp3'); logDiv.textContent="¡GANASTE EL JUEGO!"; reiniciar(); }
-    else if(puntosRival>=30){ reproducirSonido('mazo.mp3'); logDiv.textContent="¡EL RIVAL GANA!"; reiniciar(); }
-    else siguienteMano();
-  },1200);
+    setTimeout(()=>{
+      if(puntosEquipo>=30){ reproducirSonido('mazo.mp3'); logDiv.textContent="¡GANASTE EL JUEGO!"; reiniciar(); }
+      else if(puntosRival>=30){ reproducirSonido('mazo.mp3'); logDiv.textContent="¡EL RIVAL GANA!"; reiniciar(); }
+      else siguienteMano();
+    },1200);
+  }
 }
 
 function siguienteMano(){
@@ -185,19 +190,19 @@ document.getElementById('btnEnvido').addEventListener('click',()=>{
   let rivalSuma = (manoRival[0]?.v||0) + (manoRival[1]?.v||0);
   let respuesta = rivalSuma>=20?'Quiero':'No quiero';
   logDiv.textContent=`Cantaste Envido - Rival dice: ${respuesta}`;
-  if(respuesta==='Quiero'){ puntosEquipo+=envidoPuntos; pE.textContent=puntosEquipo; } else { puntosRival+=envidoPuntos; pR.textContent=puntosRival; }
+  if(respuesta==='Quiero'){ puntosEquipo+=2; pE.textContent=puntosEquipo; } else { puntosRival+=2; pR.textContent=puntosRival; }
 });
 document.getElementById('btnFlor').addEventListener('click',()=>{ reproducirSonido('flor.mp3'); florActivo=true; logDiv.textContent='Cantaste Flor'; });
 
 document.getElementById('btnQuiero').addEventListener('click',()=>{
   reproducirSonido('quiero.mp3');
-  if(envidoActivo){ puntosEquipo+=envidoPuntos; pE.textContent=puntosEquipo; envidoActivo=false; logDiv.textContent='Aceptaste Envido'; }
-  if(florActivo){ puntosEquipo+=florPuntos; pE.textContent=puntosEquipo; florActivo=false; logDiv.textContent='Aceptaste Flor'; }
+  if(envidoActivo){ puntosEquipo+=2; pE.textContent=puntosEquipo; envidoActivo=false; logDiv.textContent='Aceptaste Envido'; }
+  if(florActivo){ puntosEquipo+=3; pE.textContent=puntosEquipo; florActivo=false; logDiv.textContent='Aceptaste Flor'; }
 });
 document.getElementById('btnNoQuiero').addEventListener('click',()=>{
   reproducirSonido('noquiero.mp3');
-  if(envidoActivo){ puntosRival+=envidoPuntos; pR.textContent=puntosRival; envidoActivo=false; logDiv.textContent='No quisiste Envido'; }
-  if(florActivo){ puntosRival+=florPuntos; pR.textContent=puntosRival; florActivo=false; logDiv.textContent='No quisiste Flor'; }
+  if(envidoActivo){ puntosRival+=2; pR.textContent=puntosRival; envidoActivo=false; logDiv.textContent='No quisiste Envido'; }
+  if(florActivo){ puntosRival+=3; pR.textContent=puntosRival; florActivo=false; logDiv.textContent='No quisiste Flor'; }
 });
 document.getElementById('btnMazo').addEventListener('click',()=>{
   reproducirSonido('mazo.mp3'); 
