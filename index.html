@@ -11,7 +11,7 @@ h1 { margin:15px 0; }
 .carta { width:80px; height:120px; background:#fdf6e3; color:#000; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; text-align:center; line-height:1.2; }
 .rival .carta { background:#999; cursor: default; }
 .botones button { margin:5px; padding:10px 15px; font-size:15px; border-radius:8px; border:none; cursor:pointer; }
-.log { background:#0e6655; padding:10px; border-radius:10px; min-height:60px; margin-top:10px; }
+.log { background:#0e6655; padding:10px; border-radius:10px; min-height:60px; margin-top:10px;}
 </style>
 </head>
 <body>
@@ -33,13 +33,17 @@ h1 { margin:15px 0; }
 
 <div class="log" id="log"></div>
 
-<div style="margin-top:10px;">
-  <button onclick="mazo()">Mazo</button>
+<div class="botones">
+  <button id="btnTruco">Truco</button>
+  <button id="btnEnvido">Envido</button>
+  <button id="btnQuiero">Quiero</button>
+  <button id="btnNoQuiero">No quiero</button>
+  <button id="btnMazo">Mazo</button>
 </div>
 </div>
 
 <script>
-// ====== Datos ======
+// ===== Datos =====
 const mazo = [
   {n:'1',p:'Espada',v:14},{n:'1',p:'Basto',v:13},
   {n:'7',p:'Espada',v:12},{n:'7',p:'Oro',v:11},
@@ -64,7 +68,13 @@ const logDiv=document.getElementById('log');
 const pJ=document.getElementById('pJugador');
 const pR=document.getElementById('pRival');
 
-// ====== Funciones ======
+const btnTruco=document.getElementById('btnTruco');
+const btnEnvido=document.getElementById('btnEnvido');
+const btnQuiero=document.getElementById('btnQuiero');
+const btnNoQuiero=document.getElementById('btnNoQuiero');
+const btnMazo=document.getElementById('btnMazo');
+
+// ===== Funciones =====
 function mezclar(arr){ return arr.sort(()=>Math.random()-0.5); }
 
 function repartir(){
@@ -76,16 +86,16 @@ function repartir(){
   manoJugador = cartas.slice(0,3);
   manoRival = cartas.slice(3,6);
 
-  // Crear cartas jugador
+  // Mano jugador
   manoJugador.forEach((c,index)=>{
     const d=document.createElement('div');
     d.className='carta';
     d.textContent = simbolos[c.p]+' '+c.n;
-    d.onclick = ()=>jugar(c,index);
+    d.addEventListener('click',()=>jugar(c,index));
     mj.appendChild(d);
   });
 
-  // Crear cartas rival
+  // Mano rival
   manoRival.forEach(()=>{
     const d=document.createElement('div');
     d.className='carta';
@@ -144,7 +154,14 @@ function mazo(){
   repartir();
 }
 
-// ====== Inicio ======
+// Botones de Truco y Envido
+btnTruco.addEventListener('click',()=>{ logDiv.textContent='Cantaste Truco'; });
+btnEnvido.addEventListener('click',()=>{ logDiv.textContent='Cantaste Envido'; });
+btnQuiero.addEventListener('click',()=>{ logDiv.textContent='Cantaste Quiero'; });
+btnNoQuiero.addEventListener('click',()=>{ logDiv.textContent='Cantaste No quiero'; });
+btnMazo.addEventListener('click',mazo);
+
+// ===== Inicio =====
 repartir();
 </script>
 </body>
