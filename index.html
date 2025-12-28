@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>El Club del Truco – Celular Completo</title>
+<title>El Club del Truco – Versión Final</title>
 <style>
 body { background:#0b3d2e; color:#fff; font-family:Georgia, serif; text-align:center; margin:0; }
 h1 { margin:15px 0; }
@@ -70,6 +70,9 @@ const cartasRival = [
 const simbolos = { 'Espada':'🗡️','Basto':'⚾','Oro':'🪙','Copa':'🍷' };
 
 let puntosJugador=0, puntosRival=0;
+let trucoActivo = false;
+let envidoActivo = false;
+let envidoPuntos = 2;
 
 // DOM
 const logDiv = document.getElementById('log');
@@ -77,40 +80,39 @@ const pJ = document.getElementById('pJugador');
 const pR = document.getElementById('pRival');
 
 // ===== Funciones =====
-function jugar(cartaJugador, cartaRival){
+function jugar(cartaJugador){
+  // Elegir carta del rival aleatoria
+  const idxRival = Math.floor(Math.random() * cartasRival.length);
+  const cartaRival = cartasRival.splice(idxRival,1)[0];
+
+  // Mostrar cartas en mesa
   document.getElementById('mesaJ1').textContent = simbolos[cartaJugador.p]+' '+cartaJugador.n;
   document.getElementById('mesaR1').textContent = simbolos[cartaRival.p]+' '+cartaRival.n;
-  
-  // Comparación simple de valores
-  if(cartaJugador.v > cartaRival.v){
-    puntosJugador++; logDiv.textContent="Ganaste la mano";
-  } else if(cartaRival.v > cartaJugador.v){
-    puntosRival++; logDiv.textContent="Ganó el rival";
-  } else {
-    logDiv.textContent="Mano parda";
-  }
+
+  // Evaluar ganador mano
+  if(cartaJugador.v > cartaRival.v){ puntosJugador++; logDiv.textContent="Ganaste la mano"; }
+  else if(cartaRival.v > cartaJugador.v){ puntosRival++; logDiv.textContent="Ganó el rival"; }
+  else { logDiv.textContent="Mano parda"; }
 
   pJ.textContent = puntosJugador;
   pR.textContent = puntosRival;
 
+  // Remover carta jugada del jugador
+  cartasJugador.splice(cartasJugador.indexOf(cartaJugador),1);
+  document.getElementById(cartaJugador.id).textContent='';
+
   setTimeout(()=>{
     if(puntosJugador>=30){ logDiv.textContent="¡GANASTE EL JUEGO!"; reiniciar(); }
     else if(puntosRival>=30){ logDiv.textContent="¡EL RIVAL GANA!"; reiniciar(); }
-    else { siguienteMano(); }
-  },1000);
+    else if(cartasJugador.length>0){ siguienteMano(); }
+    else { repartirMano(); }
+  },800);
 }
 
 function siguienteMano(){
-  // Reorganizamos cartas
+  // Limpiar mesa
   document.getElementById('mesaJ1').textContent='';
   document.getElementById('mesaR1').textContent='';
-  // Para prueba, el rival siempre juega en orden
-  cartasJugador.forEach((c,i)=>{
-    document.getElementById(c.id).textContent = simbolos[c.p]+' '+c.n;
-  });
-  cartasRival.forEach((c,i)=>{
-    document.getElementById(c.id).textContent = '🂠';
-  });
   logDiv.textContent='Siguiente mano';
 }
 
@@ -118,20 +120,73 @@ function reiniciar(){
   puntosJugador=0; puntosRival=0;
   pJ.textContent=0; pR.textContent=0;
   logDiv.textContent='Se reinicia el juego';
-  siguienteMano();
+  repartirMano();
 }
 
-// ===== Botones de cartas =====
-document.getElementById('jugador1').addEventListener('click',()=>jugar(cartasJugador[0], cartasRival[0]));
-document.getElementById('jugador2').addEventListener('click',()=>jugar(cartasJugador[1], cartasRival[1]));
-document.getElementById('jugador3').addEventListener('click',()=>jugar(cartasJugador[2], cartasRival[2]));
+function repartirMano(){
+  // Restaurar cartas
+  cartasJugador.splice(0,3,
+    {id:'jugador1', n:'1', p:'Espada', v:14},
+    {id:'jugador2', n:'7', p:'Oro', v:11},
+    {id:'jugador3', n:'3', p:'Copa', v:10}
+  );
+  cartasRival.splice(0,3,
+    {id:'rival1', n:'2', p:'Espada', v:9},
+    {id:'rival2', n:'7', p:'Basto', v:4},
+    {id:'rival3', n:'1', p:'Oro', v:8}
+  );
 
-// ===== Botones de Truco y Envido =====
-document.getElementById('btnTruco').addEventListener('click',()=>{ logDiv.textContent='Cantaste Truco'; });
-document.getElementById('btnEnvido').addEventListener('click',()=>{ logDiv.textContent='Cantaste Envido'; });
-document.getElementById('btnQuiero').addEventListener('click',()=>{ logDiv.textContent='Cantaste Quiero'; });
-document.getElementById('btnNoQuiero').addEventListener('click',()=>{ logDiv.textContent='Cantaste No quiero'; });
+  document.getElementById('jugador1').textContent='🗡️ 1';
+  document.getElementById('jugador2').textContent='🪙 7';
+  document.getElementById('jugador3').textContent='🍷 3';
+
+  document.getElementById('rival1').textContent='🂠';
+  document.getElementById('rival2').textContent='🂠';
+  document.getElementById('rival3').textContent='🂠';
+
+  document.getElementById('mesaJ1').textContent='';
+  document.getElementById('mesaR1').textContent='';
+}
+
+// ===== Botones cartas =====
+document.getElementById('jugador1').addEventListener('click',()=>jugar(cartasJugador[0]));
+document.getElementById('jugador2').addEventListener('click',()=>jugar(cartasJugador[1]));
+document.getElementById('jugador3').addEventListener('click',()=>jugar(cartasJugador[2]));
+
+// ===== Botones Truco / Envido =====
+document.getElementById('btnTruco').addEventListener('click',()=>{
+  trucoActivo=true;
+  logDiv.textContent='Cantaste Truco';
+});
+document.getElementById('btnEnvido').addEventListener('click',()=>{
+  envidoActivo=true;
+  logDiv.textContent='Cantaste Envido';
+});
+document.getElementById('btnQuiero').addEventListener('click',()=>{
+  if(envidoActivo){
+    puntosJugador += envidoPuntos;
+    pJ.textContent = puntosJugador;
+    logDiv.textContent='Aceptaste Envido +'+envidoPuntos+' puntos';
+    envidoActivo=false;
+  } else if(trucoActivo){
+    logDiv.textContent='Aceptaste Truco';
+    trucoActivo=false;
+  }
+});
+document.getElementById('btnNoQuiero').addEventListener('click',()=>{
+  if(envidoActivo){
+    logDiv.textContent='No quisiste Envido';
+    envidoActivo=false;
+  } else if(trucoActivo){
+    logDiv.textContent='No quisiste Truco';
+    trucoActivo=false;
+    puntosRival+=1;
+    pR.textContent = puntosRival;
+  }
+});
 document.getElementById('btnMazo').addEventListener('click',reiniciar);
+
+repartirMano();
 </script>
 </body>
 </html>
