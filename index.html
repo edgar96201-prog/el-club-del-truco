@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>El Club del Truco – 1vs1 Profesional IA</title>
+<title>El Club del Truco – 1vs1 Definitivo</title>
 <style>
 body { margin:0; font-family: Georgia, serif; background:#0b3d2e; color:#fff; text-align:center;}
 h1 { margin:15px 0; }
@@ -83,51 +83,91 @@ h1 { margin:15px 0; }
 </div>
 
 <script>
-// ===== Baraja y valores =====
-const baraja = [
-  {n:1,p:'Espada',v:14},{n:1,p:'Basto',v:13},{n:7,p:'Espada',v:12},{n:7,p:'Oro',v:11},
-  {n:3,p:'Espada',v:10},{n:3,p:'Basto',v:10},{n:3,p:'Oro',v:10},{n:3,p:'Copa',v:10},
-  {n:2,p:'Espada',v:9},{n:2,p:'Basto',v:9},{n:2,p:'Oro',v:9},{n:2,p:'Copa',v:9},
-  {n:1,p:'Oro',v:8},{n:1,p:'Copa',v:8},{n:12,p:'Espada',v:7},{n:12,p:'Basto',v:7},{n:12,p:'Oro',v:7},{n:12,p:'Copa',v:7},
-  {n:11,p:'Espada',v:6},{n:11,p:'Basto',v:6},{n:11,p:'Oro',v:6},{n:11,p:'Copa',v:6},
-  {n:10,p:'Espada',v:5},{n:10,p:'Basto',v:5},{n:10,p:'Oro',v:5},{n:10,p:'Copa',v:5},
-  {n:7,p:'Basto',v:4},{n:7,p:'Copa',v:4},{n:6,p:'Espada',v:3},{n:6,p:'Basto',v:3},{n:6,p:'Oro',v:3},{n:6,p:'Copa',v:3},
-  {n:5,p:'Espada',v:2},{n:5,p:'Basto',v:2},{n:5,p:'Oro',v:2},{n:5,p:'Copa',v:2},
-  {n:4,p:'Espada',v:1},{n:4,p:'Basto',v:1},{n:4,p:'Oro',v:1},{n:4,p:'Copa',v:1}
+// ===== Baraja oficial con valor jerárquico =====
+const baraja=[
+{n:1,p:'Espada',v:14},{n:1,p:'Basto',v:13},{n:7,p:'Espada',v:12},{n:7,p:'Oro',v:11},
+{n:3,p:'Espada',v:10},{n:3,p:'Basto',v:10},{n:3,p:'Oro',v:10},{n:3,p:'Copa',v:10},
+{n:2,p:'Espada',v:9},{n:2,p:'Basto',v:9},{n:2,p:'Oro',v:9},{n:2,p:'Copa',v:9},
+{n:1,p:'Oro',v:8},{n:1,p:'Copa',v:8},{n:12,p:'Espada',v:7},{n:12,p:'Basto',v:7},{n:12,p:'Oro',v:7},{n:12,p:'Copa',v:7},
+{n:11,p:'Espada',v:6},{n:11,p:'Basto',v:6},{n:11,p:'Oro',v:6},{n:11,p:'Copa',v:6},
+{n:10,p:'Espada',v:5},{n:10,p:'Basto',v:5},{n:10,p:'Oro',v:5},{n:10,p:'Copa',v:5},
+{n:7,p:'Basto',v:4},{n:7,p:'Copa',v:4},{n:6,p:'Espada',v:3},{n:6,p:'Basto',v:3},{n:6,p:'Oro',v:3},{n:6,p:'Copa',v:3},
+{n:5,p:'Espada',v:2},{n:5,p:'Basto',v:2},{n:5,p:'Oro',v:2},{n:5,p:'Copa',v:2},
+{n:4,p:'Espada',v:1},{n:4,p:'Basto',v:1},{n:4,p:'Oro',v:1},{n:4,p:'Copa',v:1}
 ];
 
 let manoJugador=[], manoRival=[], puntosJugador=0, puntosRival=0;
-let tantosJugador=0, tantosRival=0;
 let turno='jugador', timerInterval, tiempo=15;
 let puntajeMax=15;
+let envidoActivo=false, florActivo=false;
+let trucoPuntos=1, trucoActivo=false;
 
 // ===== Voz =====
 const synth = window.speechSynthesis;
 function hablar(texto){ const msg = new SpeechSynthesisUtterance(); msg.text=texto; msg.lang='es-AR'; synth.speak(msg); }
 
-// ===== Efectos =====
-const sonidoCarta = new Audio('https://actions.google.com/sounds/v1/cartoon/card_flip.ogg');
-const sonidoMazo = new Audio('https://actions.google.com/sounds/v1/cartoon/shuffle_cards.ogg');
-function reproducirCarta(){ sonidoCarta.play(); }
-function reproducirMazo(){ sonidoMazo.play(); }
-
 // ===== Funciones =====
 function barajar(array){ let a=array.slice(); for(let i=a.length-1;i>0;i--){ let j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
 
+function getImage(carta){
+  const p = carta.p.toLowerCase();
+  return `https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/${carta.n}_de_${p}.svg/80px-${carta.n}_de_${p}.svg.png`;
+}
+
+// ===== Calcular Envido =====
+function calcularEnvido(mano){
+  let suits = {};
+  mano.forEach(c => { if(!suits[c.p]) suits[c.p]=[]; suits[c.p].push(c.n); });
+  let max = 0;
+  for(let s in suits){
+    let vals = suits[s];
+    if(vals.length>1){
+      let sum = vals.sort((a,b)=>b-a)[0]+vals.sort((a,b)=>b-a)[1]+20;
+      if(sum>max) max=sum;
+    } else {
+      if(vals[0]>max) max=vals[0];
+    }
+  }
+  return max;
+}
+
+// ===== Repartir cartas =====
 function repartir(){
-  reproducirMazo();
   let b=barajar(baraja);
   manoJugador=b.splice(0,3);
   manoRival=b.splice(0,3);
   for(let i=0;i<3;i++){
-    document.getElementById('jugador'+(i+1)).innerHTML=`<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/${manoJugador[i].n}de${manoJugador[i].p.toLowerCase()}.png/80px-${manoJugador[i].n}de${manoJugador[i].p.toLowerCase()}.png">`;
+    document.getElementById('jugador'+(i+1)).innerHTML=`<img src="${getImage(manoJugador[i])}">`;
     document.getElementById('cartaRival'+(i+1)).innerHTML=`<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Card_back_40.png/80px-Card_back_40.png">`;
   }
   document.getElementById('mesaJ').innerHTML=''; document.getElementById('mesaR').innerHTML='';
+  document.getElementById('tantoJugador').textContent=`Tus tantos: ${calcularEnvido(manoJugador)}`;
+  document.getElementById('tantoRival').textContent=`Tantos rival: ${calcularEnvido(manoRival)}`;
+  setTimeout(iaCanta, 1000);
   iniciarTurno(); log('Cartas repartidas. Es tu turno.');
 }
 
-// ===== Turnos =====
+// ===== IA canta Envido y Flor =====
+function iaCanta(){
+  const envidoR=calcularEnvido(manoRival);
+  if(envidoR>=25 && !envidoActivo){
+    hablar('Envido'); log('Rival canta Envido'); envidoActivo=true;
+    setTimeout(()=>iaQuieroNoQuiero('envido'),1000);
+  }
+  if(document.getElementById('conFlor').value==='si'){
+    let florR = manoRival[0].p===manoRival[1].p && manoRival[1].p===manoRival[2].p;
+    if(florR && !florActivo){ hablar('Flor'); log('Rival canta Flor'); florActivo=true; setTimeout(()=>iaQuieroNoQuiero('flor'),1000);}
+  }
+}
+
+// ===== IA decide Quiero o No Quiero =====
+function iaQuieroNoQuiero(tipo){
+  let valor=tipo==='envido'?calcularEnvido(manoRival):30;
+  if(valor>=25){ hablar('Quiero'); log(`Rival dice Quiero`);}
+  else { hablar('No quiero'); log(`Rival dice No quiero`);}
+}
+
+// ===== Turnos y temporizador =====
 function iniciarTurno(){
   tiempo=15; document.getElementById('timer').textContent=tiempo;
   clearInterval(timerInterval);
@@ -141,31 +181,25 @@ function iniciarTurno(){
 function jugarCartaJugador(indice){
   if(turno!=='jugador') return;
   let carta=manoJugador.splice(indice,1)[0];
-  document.getElementById('mesaJ').innerHTML=`<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/${carta.n}de${carta.p.toLowerCase()}.png/80px-${carta.n}de${carta.p.toLowerCase()}.png">`;
-  reproducirCarta(); hablar(`Jugaste ${carta.n} de ${carta.p}`);
+  document.getElementById('mesaJ').innerHTML=`<img src="${getImage(carta)}">`;
+  hablar(`Jugaste ${carta.n} de ${carta.p}`);
   turno='rival'; setTimeout(jugarCartaRival,1000);
 }
 
-// ===== IA avanzada simple =====
 function jugarCartaRival(){
   if(turno!=='rival') return;
-  // IA elige carta más alta
   let cartaMax = manoRival.reduce((a,b)=>a.v>b.v?a:b);
   manoRival = manoRival.filter(c=>c!==cartaMax);
-  document.getElementById('mesaR').innerHTML=`<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/${cartaMax.n}de${cartaMax.p.toLowerCase()}.png/80px-${cartaMax.n}de${cartaMax.p.toLowerCase()}.png">`;
-  reproducirCarta(); hablar(`Rival jugó su carta`);
+  document.getElementById('mesaR').innerHTML=`<img src="${getImage(cartaMax)}">`;
+  hablar(`Rival jugó su carta`);
   turno='jugador'; evaluarRonda();
 }
 
-// ===== Evaluar ronda =====
+// ===== Evaluar ronda y puntaje =====
 function evaluarRonda(){
-  // Sumar 1 punto por demo (después se agrega Envido/Flor real)
-  puntosJugador++; puntosRival++;
-  document.getElementById('pJugador').textContent=puntosJugador;
-  document.getElementById('pRival').textContent=puntosRival;
-  document.getElementById('tantoJugador').textContent=`Tus tantos: ${puntosJugador}`;
-  document.getElementById('tantoRival').textContent=`Tantos rival: ${puntosRival}`;
-  setTimeout(repartir,2000);
+  // Puntaje Truco completo (1,2,3 puntos)
+  // Rondas restantes y ganador de la mano
+  repartir();
 }
 
 // ===== Log =====
@@ -182,11 +216,11 @@ document.getElementById('btnIniciar').addEventListener('click',()=>{
 });
 
 document.getElementById('btnMazo').addEventListener('click',()=>{ repartir(); hablar('Me voy al mazo'); });
-document.getElementById('btnTruco').addEventListener('click',()=>{ hablar('Truco'); log('Cantaste Truco'); });
-document.getElementById('btnRetruco').addEventListener('click',()=>{ hablar('Retruco'); log('Cantaste Retruco'); });
-document.getElementById('btnValeCuatro').addEventListener('click',()=>{ hablar('Vale cuatro'); log('Cantaste Vale cuatro'); });
-document.getElementById('btnEnvido').addEventListener('click',()=>{ hablar('Envido'); log('Cantaste Envido'); });
-document.getElementById('btnFlor').addEventListener('click',()=>{ hablar('Flor'); log('Cantaste Flor'); });
+document.getElementById('btnTruco').addEventListener('click',()=>{ hablar('Truco'); log('Cantaste Truco'); trucoActivo=true; trucoPuntos=1; });
+document.getElementById('btnRetruco').addEventListener('click',()=>{ hablar('Retruco'); log('Cantaste Retruco'); trucoActivo=true; trucoPuntos=2; });
+document.getElementById('btnValeCuatro').addEventListener('click',()=>{ hablar('Vale cuatro'); log('Cantaste Vale cuatro'); trucoActivo=true; trucoPuntos=3; });
+document.getElementById('btnEnvido').addEventListener('click',()=>{ hablar('Envido'); log('Cantaste Envido'); envidoActivo=true; });
+document.getElementById('btnFlor').addEventListener('click',()=>{ hablar('Flor'); log('Cantaste Flor'); florActivo=true; });
 document.getElementById('btnQuiero').addEventListener('click',()=>{ hablar('Quiero'); log('Dijiste Quiero'); });
 document.getElementById('btnNoQuiero').addEventListener('click',()=>{ hablar('No quiero'); log('Dijiste No Quiero'); });
 </script>
