@@ -1,20 +1,24 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>El Club del Truco – Demo</title>
+  <meta charset="UTF-8">
+  <title>El Club del Truco</title>
   <style>
     body {
       background:#0b3d2e;
       font-family: Georgia, serif;
       color:#fff;
       text-align:center;
+      margin:0;
+      padding:0;
     }
-    h1 { margin-top:20px; }
+    h1 {
+      margin-top:20px;
+    }
     .mesa {
       margin:30px auto;
       width:90%;
-      max-width:800px;
+      max-width:900px;
       background:#145a32;
       border:6px solid #4a2c16;
       border-radius:20px;
@@ -24,7 +28,8 @@
       display:flex;
       justify-content:center;
       gap:15px;
-      margin:20px 0;
+      margin:15px 0;
+      min-height:130px;
     }
     .carta {
       width:80px;
@@ -37,7 +42,10 @@
       justify-content:center;
       font-size:18px;
       cursor:pointer;
-      font-weight:bold;
+      box-shadow:2px 2px 5px rgba(0,0,0,0.5);
+    }
+    .carta:hover {
+      transform: translateY(-5px);
     }
     .botones button {
       margin:5px;
@@ -58,205 +66,69 @@
 </head>
 <body>
 
-  <h1>🃏 El Club del Truco</h1>
-  <p>Demo jugable local (1 vs 1)</p>
+<h1>🃏 El Club del Truco</h1>
+<p>Demo local – 1 vs 1</p>
 
-  <div class="mesa">
-    <h3>Tu mano</h3>
-    <div class="cartas" id="manoJugador"></div>
+<div class="mesa">
 
-    <div class="botones">
-      <button onclick="cantar('Envido')">Envido</button>
-      <button onclick="cantar('Truco')">Truco</button>
-      <button onclick="cantar('Quiero')">Quiero</button>
-      <button onclick="cantar('No quiero')">No quiero</button>
-      <button onclick="mazo()">Mazo</button>
-    </div>
+  <h3>Mesa</h3>
+  <div class="cartas" id="mesa"></div>
 
-    <div class="log" id="log"></div>
+  <h3>Tu mano</h3>
+  <div class="cartas" id="manoJugador"></div>
+
+  <div class="botones">
+    <button onclick="cantar('Envido')">Envido</button>
+    <button onclick="cantar('Truco')">Truco</button>
+    <button onclick="cantar('Quiero')">Quiero</button>
+    <button onclick="cantar('No quiero')">No quiero</button>
+    <button onclick="mazo()">Mazo</button>
   </div>
 
-  <script>
-    let manoJugador = ['1 Espada','7 Oro','3 Copa'];
-    let turno = 'jugador';
+  <div class="log" id="log"></div>
 
-    const manoDiv = document.getElementById('manoJugador');
-    const logDiv = document.getElementById('log');
+</div>
 
-    function repartir() {
-      manoDiv.innerHTML = '';
-      manoJugador.forEach(carta => {
-        const div = document.createElement('div');
-        div.className = 'carta';
-        div.innerText = carta;
-        div.onclick = () => jugarCarta(carta);
-        manoDiv.appendChild(div);
-      });
+<script>
+  const cartas = ['1 Espada','7 Oro','3 Copa'];
+  const manoDiv = document.getElementById('manoJugador');
+  const mesaDiv = document.getElementById('mesa');
+  const logDiv = document.getElementById('log');
 
-      if (manoJugador.length === 0) {
-        log('No te quedan cartas');
-      }
-    }
+  function repartir() {
+    manoDiv.innerHTML = '';
+    mesaDiv.innerHTML = '';
+    cartas.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'carta';
+      div.innerText = c;
+      div.onclick = () => jugarCarta(div, c);
+      manoDiv.appendChild(div);
+    });
+    log('Se repartieron las cartas');
+  }
 
-    function jugarCarta(carta) {
-      if (turno !== 'jugador') return;
+  function jugarCarta(div, carta) {
+    mesaDiv.appendChild(div);
+    div.onclick = null;
+    log('Jugaste: ' + carta);
+  }
 
-      manoJugador = manoJugador.filter(c => c !== carta);
-      log('Jugaste: ' + carta);
-      repartir();
+  function cantar(texto) {
+    log('Cantaste: ' + texto);
+  }
 
-      turno = 'rival';
-      setTimeout(jugadaRival, 800);
-    }
-
-    function jugadaRival() {
-      log('El rival jugó una carta');
-      turno = 'jugador';
-    }
-
-    function cantar(texto) {
-      log('Cantaste: ' + texto);
-    }
-
-    function mazo() {
-      log('Te fuiste al mazo');
-    }
-
-    function log(texto) {
-      logDiv.innerText = texto;
-    }
-
+  function mazo() {
+    log('Te fuiste al mazo');
     repartir();
-  </script>
-  <script>
-/* ===== RANKING REAL ===== */
-const ranking = {
-  '1 Espada': 1,
-  '1 Basto': 2,
-  '7 Espada': 3,
-  '7 Oro': 4,
-  '3': 5,
-  '3 Copa': 5,
-  '2': 6,
-  '1 Oro': 7,
-  '1 Copa': 7,
-  '12': 8,
-  '11': 9,
-  '10': 10,
-  '7 Copa': 11,
-  '7 Basto': 11,
-  '6': 12,
-  '5': 13,
-  '4': 14
-};
+  }
 
-/* ===== ESTADO DEL JUEGO ===== */
-let manoJugador = ['1 Espada','7 Oro','3 Copa'];
-let turno = 'jugador';
+  function log(texto) {
+    logDiv.innerText = texto;
+  }
 
-let puntosJugador = 0;
-let puntosRival = 0;
-
-let estadoTruco = 0; // 0=sin cantar | 2=Truco | 3=Retruco | 4=Vale4
-let trucoCantadoPor = null;
-
-const manoDiv = document.getElementById('manoJugador');
-const logDiv = document.getElementById('log');
-
-function repartir() {
-  manoDiv.innerHTML = '';
-  manoJugador.forEach(carta => {
-    const div = document.createElement('div');
-    div.className = 'carta';
-    div.innerText = carta;
-    div.onclick = () => jugarCarta(carta);
-    manoDiv.appendChild(div);
-  });
-}
-
-/* ===== JUGAR CARTA ===== */
-function jugarCarta(cartaJugador) {
-  if (turno !== 'jugador') return;
-
-  manoJugador = manoJugador.filter(c => c !== cartaJugador);
   repartir();
+</script>
 
-  const cartaRival = cartaRivalRandom();
-
-  const rJ = ranking[cartaJugador];
-  const rR = ranking[cartaRival];
-
-  if (rJ < rR) {
-    puntosJugador += estadoTruco || 1;
-    log(`GANASTE la mano (${estadoTruco || 1} punto/s)`);
-  } else if (rJ > rR) {
-    puntosRival += estadoTruco || 1;
-    log(`PERDISTE la mano (${estadoTruco || 1} punto/s)`);
-  } else {
-    log('MANO PARDA');
-  }
-
-  resetTruco();
-  turno = 'rival';
-  setTimeout(() => turno = 'jugador', 800);
-}
-
-/* ===== TRUCO ===== */
-function cantar(texto) {
-  if (texto === 'Truco' && estadoTruco === 0) {
-    estadoTruco = 2;
-    trucoCantadoPor = 'jugador';
-    log('Cantaste TRUCO');
-  } 
-  else if (texto === 'Truco' && estadoTruco === 2) {
-    estadoTruco = 3;
-    trucoCantadoPor = 'jugador';
-    log('Cantaste RETRUCO');
-  } 
-  else if (texto === 'Truco' && estadoTruco === 3) {
-    estadoTruco = 4;
-    trucoCantadoPor = 'jugador';
-    log('Cantaste VALE CUATRO');
-  }
-  else if (texto === 'Quiero') {
-    log('Quiero');
-  }
-  else if (texto === 'No quiero') {
-    const puntos = estadoTruco - 1;
-    if (trucoCantadoPor === 'jugador') {
-      puntosRival += puntos;
-      log(`No quiso. Rival gana ${puntos} punto/s`);
-    } else {
-      puntosJugador += puntos;
-      log(`No quiso. Ganás ${puntos} punto/s`);
-    }
-    resetTruco();
-  }
-}
-
-/* ===== UTILIDADES ===== */
-function cartaRivalRandom() {
-  const posibles = ['4','5','6','7 Copa','10','11','12'];
-  return posibles[Math.floor(Math.random() * posibles.length)];
-}
-
-function resetTruco() {
-  estadoTruco = 0;
-  trucoCantadoPor = null;
-}
-
-function mazo() {
-  puntosRival += estadoTruco || 1;
-  log('Te fuiste al mazo');
-  resetTruco();
-}
-
-function log(texto) {
-  logDiv.innerText = 
-    texto + 
-    ` | Vos: ${puntosJugador} - Rival: ${puntosRival}`;
-}
-
-repartir();
-      </script>
-
+</body>
+</html>
