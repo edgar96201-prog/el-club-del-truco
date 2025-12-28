@@ -2,14 +2,15 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>El Club del Truco – 2vs2 Estratégico</title>
+<title>El Club del Truco – 2vs2 con cartas reales</title>
 <style>
 body { background:#0b3d2e; color:#fff; font-family:Georgia, serif; text-align:center; margin:0; }
 h1 { margin:15px 0; }
 .mesa { background:#145a32; border:6px solid #4a2c16; border-radius:20px; margin:20px auto; padding:15px; max-width:900px; }
 .cartas { display:flex; justify-content:center; gap:12px; min-height:130px; flex-wrap:wrap; }
-.carta { width:80px; height:120px; background:#fdf6e3; color:#000; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; text-align:center; line-height:1.2; }
-.rival .carta { background:#999; cursor: default; }
+.carta { width:80px; height:120px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+.carta img { width:80px; height:120px; border-radius:8px; }
+.rival .carta { cursor: default; }
 .botones button { margin:5px; padding:10px 15px; font-size:15px; border-radius:8px; border:none; cursor:pointer; }
 .log { background:#0e6655; padding:10px; border-radius:10px; min-height:80px; margin-top:10px;}
 </style>
@@ -24,8 +25,8 @@ h1 { margin:15px 0; }
 
 <h3>Rivales</h3>
 <div class="cartas rival" id="manoRival">
-  <div class="carta" id="rival1">🂠</div>
-  <div class="carta" id="rival2">🂠</div>
+  <div class="carta" id="rival1"><img src="imagenes/back.png"></div>
+  <div class="carta" id="rival2"><img src="imagenes/back.png"></div>
 </div>
 
 <h3>Mesa</h3>
@@ -59,10 +60,7 @@ h1 { margin:15px 0; }
 
 <script>
 // ===== Sonidos =====
-function reproducirSonido(nombre){
-  const audio = new Audio(nombre);
-  audio.play();
-}
+function reproducirSonido(nombre){ new Audio(nombre).play(); }
 
 // ===== Baraja y valores =====
 const baraja = [
@@ -77,51 +75,36 @@ const baraja = [
   {n:'5',p:'Espada',v:2},{n:'5',p:'Basto',v:2},{n:'5',p:'Oro',v:2},{n:'5',p:'Copa',v:2},
   {n:'4',p:'Espada',v:1},{n:'4',p:'Basto',v:1},{n:'4',p:'Oro',v:1},{n:'4',p:'Copa',v:1}
 ];
-const simbolos = { 'Espada':'🗡️','Basto':'⚾','Oro':'🪙','Copa':'🍷' };
 
 let puntosEquipo=0, puntosRival=0;
-let trucoNivel=0;
-let envidoActivo=false;
-let florActivo=false;
-let rondaActual=0;
-
+let trucoNivel=0, envidoActivo=false, florActivo=false, rondaActual=0;
 let manoJugador=[], manoCompañero=[], manoRival=[];
 
-// DOM
 const logDiv = document.getElementById('log');
 const pE = document.getElementById('pEquipo');
 const pR = document.getElementById('pRival');
 
-// ===== Funciones =====
-function barajar(array){
-  let a = array.slice();
-  for(let i=a.length-1;i>0;i--){
-    let j=Math.floor(Math.random()*(i+1));
-    [a[i],a[j]]=[a[j],a[i]];
-  }
-  return a;
-}
+function barajar(array){ let a=array.slice(); for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a;}
 
 function repartirMano(){
-  let barajaAct = barajar(baraja);
-  manoJugador = barajaAct.splice(0,3);
-  manoCompañero = barajaAct.splice(0,3);
-  manoRival = barajaAct.splice(0,4);
+  let b = barajar(baraja);
+  manoJugador = b.splice(0,3);
+  manoCompañero = b.splice(0,3);
+  manoRival = b.splice(0,4);
 
   for(let i=0;i<3;i++){
-    document.getElementById('jugador'+(i+1)).textContent = simbolos[manoJugador[i].p]+' '+manoJugador[i].n;
+    document.getElementById('jugador'+(i+1)).innerHTML=`<img src="imagenes/${manoJugador[i].n}_${manoJugador[i].p}.png">`;
   }
 
-  document.getElementById('mesaJ1').textContent='';
-  document.getElementById('mesaJ2').textContent='';
-  document.getElementById('mesaR1').textContent='🂠';
-  document.getElementById('mesaR2').textContent='🂠';
+  document.getElementById('mesaJ1').innerHTML='';
+  document.getElementById('mesaJ2').innerHTML='';
+  document.getElementById('mesaR1').innerHTML='<img src="imagenes/back.png">';
+  document.getElementById('mesaR2').innerHTML='<img src="imagenes/back.png">';
 
   rondaActual=0;
   logDiv.textContent='Se repartieron cartas aleatorias';
 }
 
-// ===== Juego de cartas por rondas =====
 function jugarCarta(indice){
   if(rondaActual>=3) return;
   let cartaJugador = manoJugador.splice(indice,1)[0];
@@ -129,17 +112,16 @@ function jugarCarta(indice){
   let cartaR1 = manoRival.splice(0,1)[0];
   let cartaR2 = manoRival.splice(0,1)[0];
 
-  document.getElementById('mesaJ1').textContent = simbolos[cartaJugador.p]+' '+cartaJugador.n;
-  document.getElementById('mesaJ2').textContent = simbolos[cartaComp.p]+' '+cartaComp.n;
-  document.getElementById('mesaR1').textContent = simbolos[cartaR1.p]+' '+cartaR1.n;
-  document.getElementById('mesaR2').textContent = simbolos[cartaR2.p]+' '+cartaR2.n;
+  document.getElementById('mesaJ1').innerHTML=`<img src="imagenes/${cartaJugador.n}_${cartaJugador.p}.png">`;
+  document.getElementById('mesaJ2').innerHTML=`<img src="imagenes/${cartaComp.n}_${cartaComp.p}.png">`;
+  document.getElementById('mesaR1').innerHTML=`<img src="imagenes/${cartaR1.n}_${cartaR1.p}.png">`;
+  document.getElementById('mesaR2').innerHTML=`<img src="imagenes/${cartaR2.n}_${cartaR2.p}.png">`;
 
   rondaActual++;
 
   let equipoGana=0, rivalGana=0;
   [[cartaJugador,cartaR1],[cartaComp,cartaR2]].forEach(par=>{
-    if(par[0].v>par[1].v) equipoGana++;
-    else if(par[1].v>par[0].v) rivalGana++;
+    if(par[0].v>par[1].v) equipoGana++; else if(par[1].v>par[0].v) rivalGana++;
   });
 
   if(rondaActual===3){
@@ -150,7 +132,6 @@ function jugarCarta(indice){
 
     pE.textContent=puntosEquipo;
     pR.textContent=puntosRival;
-
     trucoNivel=0;
 
     setTimeout(()=>{
@@ -162,10 +143,10 @@ function jugarCarta(indice){
 }
 
 function siguienteMano(){
-  document.getElementById('mesaJ1').textContent='';
-  document.getElementById('mesaJ2').textContent='';
-  document.getElementById('mesaR1').textContent='🂠';
-  document.getElementById('mesaR2').textContent='🂠';
+  document.getElementById('mesaJ1').innerHTML='';
+  document.getElementById('mesaJ2').innerHTML='';
+  document.getElementById('mesaR1').innerHTML='<img src="imagenes/back.png">';
+  document.getElementById('mesaR2').innerHTML='<img src="imagenes/back.png">';
   logDiv.textContent='Siguiente mano';
 }
 
@@ -175,12 +156,12 @@ function reiniciar(){
   repartirMano();
 }
 
-// ===== Botones cartas =====
+// ===== Eventos cartas =====
 document.getElementById('jugador1').addEventListener('click',()=>jugarCarta(0));
 document.getElementById('jugador2').addEventListener('click',()=>jugarCarta(1));
 document.getElementById('jugador3').addEventListener('click',()=>jugarCarta(2));
 
-// ===== Botones Truco / Envido / Flor con sonidos =====
+// ===== Botones =====
 document.getElementById('btnTruco').addEventListener('click',()=>{ reproducirSonido('truco.mp3'); trucoNivel=1; logDiv.textContent='Cantaste Truco'; });
 document.getElementById('btnRetruco').addEventListener('click',()=>{ if(trucoNivel>=1){ reproducirSonido('retruco.mp3'); trucoNivel=2; logDiv.textContent='Cantaste Retruco'; }});
 document.getElementById('btnValeCuatro').addEventListener('click',()=>{ if(trucoNivel>=2){ reproducirSonido('vale4.mp3'); trucoNivel=3; logDiv.textContent='Cantaste Vale cuatro'; }});
@@ -204,10 +185,7 @@ document.getElementById('btnNoQuiero').addEventListener('click',()=>{
   if(envidoActivo){ puntosRival+=2; pR.textContent=puntosRival; envidoActivo=false; logDiv.textContent='No quisiste Envido'; }
   if(florActivo){ puntosRival+=3; pR.textContent=puntosRival; florActivo=false; logDiv.textContent='No quisiste Flor'; }
 });
-document.getElementById('btnMazo').addEventListener('click',()=>{
-  reproducirSonido('mazo.mp3'); 
-  reiniciar();
-});
+document.getElementById('btnMazo').addEventListener('click',()=>{ reproducirSonido('mazo.mp3'); reiniciar(); });
 
 repartirMano();
 </script>
