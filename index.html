@@ -23,13 +23,24 @@ h1 { margin:15px 0; }
 <p>Vos: <span id="pJugador">0</span> | Rival: <span id="pRival">0</span></p>
 
 <h3>Rival</h3>
-<div class="cartas rival" id="manoRival"></div>
+<div class="cartas rival" id="manoRival">
+  <div class="carta" id="rival1">🂠</div>
+  <div class="carta" id="rival2">🂠</div>
+  <div class="carta" id="rival3">🂠</div>
+</div>
 
 <h3>Mesa</h3>
-<div class="cartas" id="mesa"></div>
+<div class="cartas" id="mesa">
+  <div class="carta" id="mesaJ1"></div>
+  <div class="carta" id="mesaR1"></div>
+</div>
 
 <h3>Tu mano</h3>
-<div class="cartas" id="manoJugador"></div>
+<div class="cartas" id="manoJugador">
+  <div class="carta" id="jugador1">🗡️ 1</div>
+  <div class="carta" id="jugador2">🪙 7</div>
+  <div class="carta" id="jugador3">🍷 3</div>
+</div>
 
 <div class="log" id="log"></div>
 
@@ -43,126 +54,77 @@ h1 { margin:15px 0; }
 </div>
 
 <script>
-// ===== Datos =====
-const mazo = [
-  {n:'1',p:'Espada',v:14},{n:'1',p:'Basto',v:13},
-  {n:'7',p:'Espada',v:12},{n:'7',p:'Oro',v:11},
-  {n:'3',p:'Espada',v:10},{n:'2',p:'Espada',v:9},
-  {n:'1',p:'Oro',v:8},{n:'12',p:'Copa',v:7},
-  {n:'11',p:'Copa',v:6},{n:'10',p:'Copa',v:5},
-  {n:'7',p:'Basto',v:4},{n:'6',p:'Oro',v:3},
-  {n:'5',p:'Espada',v:2},{n:'4',p:'Basto',v:1}
+// ===== Datos y variables =====
+const cartasJugador = [
+  {id:'jugador1', n:'1', p:'Espada', v:14},
+  {id:'jugador2', n:'7', p:'Oro', v:11},
+  {id:'jugador3', n:'3', p:'Copa', v:10}
+];
+
+const cartasRival = [
+  {id:'rival1', n:'2', p:'Espada', v:9},
+  {id:'rival2', n:'7', p:'Basto', v:4},
+  {id:'rival3', n:'1', p:'Oro', v:8}
 ];
 
 const simbolos = { 'Espada':'🗡️','Basto':'⚾','Oro':'🪙','Copa':'🍷' };
 
-let manoJugador=[], manoRival=[];
 let puntosJugador=0, puntosRival=0;
-let turno='jugador';
 
 // DOM
-const mj=document.getElementById('manoJugador');
-const mr=document.getElementById('manoRival');
-const mesaDiv=document.getElementById('mesa');
-const logDiv=document.getElementById('log');
-const pJ=document.getElementById('pJugador');
-const pR=document.getElementById('pRival');
+const logDiv = document.getElementById('log');
+const pJ = document.getElementById('pJugador');
+const pR = document.getElementById('pRival');
 
-const btnTruco=document.getElementById('btnTruco');
-const btnEnvido=document.getElementById('btnEnvido');
-const btnQuiero=document.getElementById('btnQuiero');
-const btnNoQuiero=document.getElementById('btnNoQuiero');
-const btnMazo=document.getElementById('btnMazo');
-
-// ===== Funciones =====
-function mezclar(arr){ return arr.sort(()=>Math.random()-0.5); }
-
-function repartir(){
-  mj.innerHTML=''; mr.innerHTML=''; mesaDiv.innerHTML='';
-  turno='jugador';
-  logDiv.textContent='Se repartieron las cartas';
-
-  const cartas = mezclar([...mazo]);
-  manoJugador = cartas.slice(0,3);
-  manoRival = cartas.slice(3,6);
-
-  // Mano jugador
-  manoJugador.forEach((c,index)=>{
-    const d=document.createElement('div');
-    d.className='carta';
-    d.textContent = simbolos[c.p]+' '+c.n;
-    d.addEventListener('click',()=>jugar(c,index));
-    mj.appendChild(d);
-  });
-
-  // Mano rival
-  manoRival.forEach(()=>{
-    const d=document.createElement('div');
-    d.className='carta';
-    d.textContent='🂠';
-    mr.appendChild(d);
-  });
-}
-
-function jugar(carta, idx){
-  if(turno!=='jugador') return;
-  turno='rival';
-  mj.removeChild(mj.children[idx]);
-  mesaDiv.innerHTML='';
-
-  const cRival = manoRival.shift();
-  mr.removeChild(mr.children[0]);
-
-  const dJ=document.createElement('div');
-  dJ.className='carta';
-  dJ.textContent = simbolos[carta.p]+' '+carta.n;
-
-  const dR=document.createElement('div');
-  dR.className='carta';
-  dR.textContent = simbolos[cRival.p]+' '+cRival.n;
-
-  mesaDiv.appendChild(dJ);
-  mesaDiv.appendChild(dR);
-
-  setTimeout(()=>{ evaluarMano(carta,cRival); },400);
-}
-
-function evaluarMano(cJ,cR){
-  if(cJ.v>cR.v){ puntosJugador++; logDiv.textContent="Ganaste la mano"; }
-  else if(cR.v>cJ.v){ puntosRival++; logDiv.textContent="Ganó el rival"; }
-  else { logDiv.textContent="Mano parda"; }
+// Funciones
+function jugar(cartaJugador, cartaRival){
+  document.getElementById('mesaJ1').textContent = simbolos[cartaJugador.p]+' '+cartaJugador.n;
+  document.getElementById('mesaR1').textContent = simbolos[cartaRival.p]+' '+cartaRival.n;
+  
+  if(cartaJugador.v > cartaRival.v){
+    puntosJugador++; logDiv.textContent="Ganaste la mano";
+  } else if(cartaRival.v > cartaJugador.v){
+    puntosRival++; logDiv.textContent="Ganó el rival";
+  } else {
+    logDiv.textContent="Mano parda";
+  }
 
   pJ.textContent = puntosJugador;
   pR.textContent = puntosRival;
 
-  setTimeout(()=>{ 
+  setTimeout(()=>{
     if(puntosJugador>=30){ logDiv.textContent="¡GANASTE EL JUEGO!"; reiniciar(); }
     else if(puntosRival>=30){ logDiv.textContent="¡EL RIVAL GANA!"; reiniciar(); }
-    else if(manoJugador.length>0){ /* continua la mano */ }
-    else { repartir(); }
   },1000);
 }
 
 function reiniciar(){
   puntosJugador=0; puntosRival=0;
   pJ.textContent=0; pR.textContent=0;
-  repartir();
+  logDiv.textContent='Se reinicia el juego';
+  // Restaurar cartas visibles
+  document.getElementById('jugador1').textContent='🗡️ 1';
+  document.getElementById('jugador2').textContent='🪙 7';
+  document.getElementById('jugador3').textContent='🍷 3';
+  document.getElementById('rival1').textContent='🂠';
+  document.getElementById('rival2').textContent='🂠';
+  document.getElementById('rival3').textContent='🂠';
+  document.getElementById('mesaJ1').textContent='';
+  document.getElementById('mesaR1').textContent='';
 }
 
-function mazo(){
-  logDiv.textContent='Te fuiste al mazo';
-  repartir();
-}
+// Botones cartas (simulado para prueba)
+document.getElementById('jugador1').addEventListener('click',()=>jugar(cartasJugador[0], cartasRival[0]));
+document.getElementById('jugador2').addEventListener('click',()=>jugar(cartasJugador[1], cartasRival[1]));
+document.getElementById('jugador3').addEventListener('click',()=>jugar(cartasJugador[2], cartasRival[2]));
 
 // Botones de Truco y Envido
-btnTruco.addEventListener('click',()=>{ logDiv.textContent='Cantaste Truco'; });
-btnEnvido.addEventListener('click',()=>{ logDiv.textContent='Cantaste Envido'; });
-btnQuiero.addEventListener('click',()=>{ logDiv.textContent='Cantaste Quiero'; });
-btnNoQuiero.addEventListener('click',()=>{ logDiv.textContent='Cantaste No quiero'; });
-btnMazo.addEventListener('click',mazo);
+document.getElementById('btnTruco').addEventListener('click',()=>{ logDiv.textContent='Cantaste Truco'; });
+document.getElementById('btnEnvido').addEventListener('click',()=>{ logDiv.textContent='Cantaste Envido'; });
+document.getElementById('btnQuiero').addEventListener('click',()=>{ logDiv.textContent='Cantaste Quiero'; });
+document.getElementById('btnNoQuiero').addEventListener('click',()=>{ logDiv.textContent='Cantaste No quiero'; });
+document.getElementById('btnMazo').addEventListener('click',reiniciar);
 
-// ===== Inicio =====
-repartir();
 </script>
 </body>
 </html>
