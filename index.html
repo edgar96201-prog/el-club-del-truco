@@ -11,7 +11,8 @@ h1 { margin:15px 0; }
 .menu button { margin:10px; padding:12px 25px; font-size:16px; border-radius:8px; cursor:pointer; }
 .mesa { display:none; background:#145a32; border:6px solid #4a2c16; border-radius:20px; padding:15px; }
 .cartas { display:flex; justify-content:center; gap:12px; min-height:130px; flex-wrap:wrap; }
-.carta { width:80px; height:120px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; background:#fdf6e3; }
+.carta { width:80px; height:120px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; background:#fdf6e3; transition: transform 0.2s;}
+.carta:hover { transform: scale(1.05); }
 .carta img { width:100%; height:100%; object-fit:cover; }
 .rival .carta { cursor: default; }
 .botones button { margin:5px; padding:8px 12px; font-size:14px; border-radius:8px; cursor:pointer; }
@@ -83,7 +84,7 @@ h1 { margin:15px 0; }
 </div>
 
 <script>
-// ===== Baraja oficial con valor jerárquico =====
+// ===== Baraja y valores =====
 const baraja=[
 {n:1,p:'Espada',v:14},{n:1,p:'Basto',v:13},{n:7,p:'Espada',v:12},{n:7,p:'Oro',v:11},
 {n:3,p:'Espada',v:10},{n:3,p:'Basto',v:10},{n:3,p:'Oro',v:10},{n:3,p:'Copa',v:10},
@@ -124,9 +125,7 @@ function calcularEnvido(mano){
     if(vals.length>1){
       let sum = vals.sort((a,b)=>b-a)[0]+vals.sort((a,b)=>b-a)[1]+20;
       if(sum>max) max=sum;
-    } else {
-      if(vals[0]>max) max=vals[0];
-    }
+    } else { if(vals[0]>max) max=vals[0]; }
   }
   return max;
 }
@@ -147,25 +146,15 @@ function repartir(){
   iniciarTurno(); log('Cartas repartidas. Es tu turno.');
 }
 
-// ===== IA canta Envido y Flor =====
-function iaCanta(){
-  const envidoR=calcularEnvido(manoRival);
-  if(envidoR>=25 && !envidoActivo){
-    hablar('Envido'); log('Rival canta Envido'); envidoActivo=true;
-    setTimeout(()=>iaQuieroNoQuiero('envido'),1000);
-  }
-  if(document.getElementById('conFlor').value==='si'){
-    let florR = manoRival[0].p===manoRival[1].p && manoRival[1].p===manoRival[2].p;
-    if(florR && !florActivo){ hablar('Flor'); log('Rival canta Flor'); florActivo=true; setTimeout(()=>iaQuieroNoQuiero('flor'),1000);}
-  }
+// ===== Evaluar puntaje y final =====
+function sumarPuntos(jugador, puntos){
+  if(jugador==='jugador'){ puntosJugador+=puntos; document.getElementById('pJugador').textContent=puntosJugador; }
+  else { puntosRival+=puntos; document.getElementById('pRival').textContent=puntosRival; }
+  if(puntosJugador>=puntajeMax){ alert('¡Ganaste!'); reiniciar(); }
+  if(puntosRival>=puntajeMax){ alert('¡Perdiste!'); reiniciar(); }
 }
 
-// ===== IA decide Quiero o No Quiero =====
-function iaQuieroNoQuiero(tipo){
-  let valor=tipo==='envido'?calcularEnvido(manoRival):30;
-  if(valor>=25){ hablar('Quiero'); log(`Rival dice Quiero`);}
-  else { hablar('No quiero'); log(`Rival dice No quiero`);}
-}
+function reiniciar(){ puntosJugador=0; puntosRival=0; repartir(); }
 
 // ===== Turnos y temporizador =====
 function iniciarTurno(){
@@ -188,17 +177,14 @@ function jugarCartaJugador(indice){
 
 function jugarCartaRival(){
   if(turno!=='rival') return;
-  let cartaMax = manoRival.reduce((a,b)=>a.v>b.v?a:b);
-  manoRival = manoRival.filter(c=>c!==cartaMax);
-  document.getElementById('mesaR').innerHTML=`<img src="${getImage(cartaMax)}">`;
+  let carta = manoRival.splice(Math.floor(Math.random()*manoRival.length),1)[0];
+  document.getElementById('mesaR').innerHTML=`<img src="${getImage(carta)}">`;
   hablar(`Rival jugó su carta`);
-  turno='jugador'; evaluarRonda();
+  turno='jugador'; setTimeout(evaluarRonda,1000);
 }
 
-// ===== Evaluar ronda y puntaje =====
 function evaluarRonda(){
-  // Puntaje Truco completo (1,2,3 puntos)
-  // Rondas restantes y ganador de la mano
+  // Placeholder: sumar puntos por Truco/Envido/Flor
   repartir();
 }
 
