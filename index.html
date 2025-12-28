@@ -10,9 +10,7 @@ body {
   color:#fff;
   font-family:Georgia, serif;
   text-align:center;
-  margin:0;
 }
-h1 { margin:15px 0; }
 .mesa {
   background:#145a32;
   border:6px solid #4a2c16;
@@ -36,25 +34,17 @@ h1 { margin:15px 0; }
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:16px;
+  font-size:15px;
   cursor:pointer;
-  box-shadow:2px 2px 5px rgba(0,0,0,.5);
 }
 .rival .carta {
-  background:#bfbfbf;
-}
-.botones button {
-  margin:5px;
-  padding:10px 15px;
-  font-size:15px;
-  border-radius:8px;
-  border:none;
+  background:#999;
 }
 .log {
   background:#0e6655;
-  border-radius:10px;
   padding:10px;
-  min-height:50px;
+  border-radius:10px;
+  min-height:40px;
   margin-top:10px;
 }
 </style>
@@ -66,10 +56,7 @@ h1 { margin:15px 0; }
 
 <div class="mesa">
 
-<h3>Puntaje</h3>
-<p>Vos: <span id="pJugador">0</span> | Rival: <span id="pRival">0</span></p>
-
-<h3>Mano del rival</h3>
+<h3>Rival</h3>
 <div class="cartas rival" id="manoRival"></div>
 
 <h3>Mesa</h3>
@@ -78,140 +65,86 @@ h1 { margin:15px 0; }
 <h3>Tu mano</h3>
 <div class="cartas" id="manoJugador"></div>
 
-<div class="botones">
-  <button onclick="cantarTruco()">Truco</button>
-  <button onclick="quiero()">Quiero</button>
-  <button onclick="noQuiero()">No quiero</button>
-  <button onclick="mazo()">Mazo</button>
-</div>
-
 <div class="log" id="log"></div>
+
+<button onclick="repartir()">Repartir de nuevo</button>
 
 </div>
 
 <script>
-// ================= DATOS =================
-const mazo = [
- {n:'1 Espada',v:14},{n:'1 Basto',v:13},
- {n:'7 Espada',v:12},{n:'7 Oro',v:11},
- {n:'3',v:10},{n:'2',v:9},
- {n:'1',v:8},{n:'12',v:7},
- {n:'11',v:6},{n:'10',v:5},
- {n:'7',v:4},{n:'6',v:3},
- {n:'5',v:2},{n:'4',v:1}
-];
+const valores = {
+ "1 Espada":14,"1 Basto":13,"7 Espada":12,"7 Oro":11,
+ "3":10,"2":9,"1":8,"12":7,"11":6,"10":5,
+ "7":4,"6":3,"5":2,"4":1
+};
+
+const mazoBase = Object.keys(valores);
 
 let manoJugador=[], manoRival=[];
-let puntosJugador=0, puntosRival=0;
-let estadoTruco=0;
-let turno='jugador';
 
-// ================= DOM =================
-const mj=document.getElementById('manoJugador');
-const mr=document.getElementById('manoRival');
-const mesaDiv=document.getElementById('mesa');
-const logDiv=document.getElementById('log');
+const mj = document.getElementById("manoJugador");
+const mr = document.getElementById("manoRival");
+const mesa = document.getElementById("mesa");
+const log = document.getElementById("log");
 
-// ================= FUNCIONES =================
-function mezclar(array){
- return array.sort(()=>Math.random()-0.5);
+function mezclar(arr){
+  return arr.sort(()=>Math.random()-0.5);
 }
 
 function repartir(){
- mj.innerHTML=''; mr.innerHTML=''; mesaDiv.innerHTML='';
- estadoTruco=0; turno='jugador';
- const cartas=mezclar([...mazo]).slice(0,6);
- manoJugador=cartas.slice(0,3);
- manoRival=cartas.slice(3,6);
+  mj.innerHTML="";
+  mr.innerHTML="";
+  mesa.innerHTML="";
+  log.innerText="Se repartieron las cartas";
 
- manoJugador.forEach(c=>{
-  const d=document.createElement('div');
-  d.className='carta';
-  d.innerText=c.n;
-  d.onclick=()=>jugarJugador(c,d);
-  mj.appendChild(d);
- });
+  const mazo = mezclar([...mazoBase]);
+  manoJugador = mazo.slice(0,3);
+  manoRival = mazo.slice(3,6);
 
- manoRival.forEach(()=>{
-  const d=document.createElement('div');
-  d.className='carta';
-  d.innerText='🂠';
-  mr.appendChild(d);
- });
+  manoJugador.forEach(c=>{
+    const d=document.createElement("div");
+    d.className="carta";
+    d.innerText=c;
+    d.onclick=()=>jugar(c,d);
+    mj.appendChild(d);
+  });
 
- log('Se repartieron las cartas');
+  manoRival.forEach(()=>{
+    const d=document.createElement("div");
+    d.className="carta";
+    d.innerText="🂠";
+    mr.appendChild(d);
+  });
 }
 
-function jugarJugador(carta,div){
- if(turno!=='jugador') return;
- turno='rival';
- mj.removeChild(div);
- jugarCartaMesa(carta,'Vos');
- setTimeout(jugarRival,800);
+function jugar(carta,div){
+  mj.removeChild(div);
+  mesa.innerHTML="";
+
+  const cRival = manoRival.pop();
+  mr.removeChild(mr.firstChild);
+
+  const dj=document.createElement("div");
+  dj.className="carta";
+  dj.innerText=carta;
+
+  const dr=document.createElement("div");
+  dr.className="carta";
+  dr.innerText=cRival;
+
+  mesa.appendChild(dj);
+  mesa.appendChild(dr);
+
+  const vJ = valores[carta];
+  const vR = valores[cRival];
+
+  if(vJ > vR){
+    log.innerText = "Ganaste la mano";
+  } else {
+    log.innerText = "Ganó el rival";
+  }
 }
 
-function jugarRival(){
- const c=manoRival.pop();
- mr.removeChild(mr.firstChild);
- jugarCartaMesa(c,'Rival');
- evaluarMano();
- turno='jugador';
-}
-
-function jugarCartaMesa(carta,quien){
- const d=document.createElement('div');
- d.className='carta';
- d.innerText=carta.n;
- mesaDiv.appendChild(d);
- log(quien+' juega '+carta.n);
-}
-
-function evaluarMano(){
- const c1=mesaDiv.children[0].innerText;
- const c2=mesaDiv.children[1].innerText;
- const v1=mazo.find(c=>c.n===c1)?.v||0;
- const v2=mazo.find(c=>c.n===c2)?.v||0;
-
- if(v1>v2){
-  puntosJugador+=estadoTruco||1;
-  log('Ganaste la mano');
- } else {
-  puntosRival+=estadoTruco||1;
-  log('Ganó el rival');
- }
-
- document.getElementById('pJugador').innerText=puntosJugador;
- document.getElementById('pRival').innerText=puntosRival;
-
- setTimeout(repartir,1200);
-}
-
-function cantarTruco(){
- if(estadoTruco===0){
-  estadoTruco=2;
-  log('Cantaste TRUCO');
- }
-}
-
-function quiero(){
- log('Quiero');
-}
-
-function noQuiero(){
- puntosRival+=estadoTruco||1;
- document.getElementById('pRival').innerText=puntosRival;
- log('No quiero');
- repartir();
-}
-
-function mazo(){
- log('Te fuiste al mazo');
- repartir();
-}
-
-function log(t){ logDiv.innerText=t; }
-
-// ================= INICIO =================
 repartir();
 </script>
 
