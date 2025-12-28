@@ -2,64 +2,16 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>El Club del Truco</title>
+<title>El Club del Truco – Celular</title>
 <style>
-body {
-  background:#0b3d2e;
-  color:#fff;
-  font-family:Georgia, serif;
-  text-align:center;
-  margin:0;
-}
+body { background:#0b3d2e; color:#fff; font-family:Georgia, serif; text-align:center; margin:0; }
 h1 { margin:15px 0; }
-.mesa {
-  background:#145a32;
-  border:6px solid #4a2c16;
-  border-radius:20px;
-  margin:20px auto;
-  padding:15px;
-  max-width:900px;
-}
-.cartas {
-  display:flex;
-  justify-content:center;
-  gap:12px;
-  min-height:130px;
-}
-.carta {
-  width:80px;
-  height:120px;
-  background:#fdf6e3;
-  color:#000;
-  border-radius:8px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:14px;
-  cursor:pointer;
-  flex-direction: column;
-}
-.carta span {
-  font-size:22px;
-}
-.rival .carta {
-  background:#999;
-}
-.botones button {
-  margin:5px;
-  padding:10px 15px;
-  font-size:15px;
-  border-radius:8px;
-  border:none;
-  cursor:pointer;
-}
-.log {
-  background:#0e6655;
-  padding:10px;
-  border-radius:10px;
-  min-height:60px;
-  margin-top:10px;
-}
+.mesa { background:#145a32; border:6px solid #4a2c16; border-radius:20px; margin:20px auto; padding:15px; max-width:900px; }
+.cartas { display:flex; justify-content:center; gap:12px; min-height:130px; flex-wrap:wrap; }
+.carta { width:80px; height:120px; background:#fdf6e3; color:#000; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; text-align:center; line-height:1.2; }
+.rival .carta { background:#999; cursor: default; }
+.botones button { margin:5px; padding:10px 15px; font-size:15px; border-radius:8px; border:none; cursor:pointer; }
+.log { background:#0e6655; padding:10px; border-radius:10px; min-height:60px; margin-top:10px; }
 </style>
 </head>
 <body>
@@ -67,7 +19,6 @@ h1 { margin:15px 0; }
 <h1>🃏 El Club del Truco – Hasta 30 puntos</h1>
 
 <div class="mesa">
-
 <h3>Puntaje</h3>
 <p>Vos: <span id="pJugador">0</span> | Rival: <span id="pRival">0</span></p>
 
@@ -85,7 +36,6 @@ h1 { margin:15px 0; }
 <div style="margin-top:10px;">
   <button onclick="mazo()">Mazo</button>
 </div>
-
 </div>
 
 <script>
@@ -100,18 +50,13 @@ const mazo = [
   {n:'5',p:'Espada',v:2},{n:'4',p:'Basto',v:1}
 ];
 
-const simbolos = {
-  'Espada':'🗡️',
-  'Basto':'⚾',
-  'Oro':'🪙',
-  'Copa':'🍷'
-};
+const simbolos = { 'Espada':'🗡️','Basto':'⚾','Oro':'🪙','Copa':'🍷' };
 
 let manoJugador=[], manoRival=[];
 let puntosJugador=0, puntosRival=0;
 let turno='jugador';
 
-// ====== DOM ======
+// DOM
 const mj=document.getElementById('manoJugador');
 const mr=document.getElementById('manoRival');
 const mesaDiv=document.getElementById('mesa');
@@ -125,86 +70,82 @@ function mezclar(arr){ return arr.sort(()=>Math.random()-0.5); }
 function repartir(){
   mj.innerHTML=''; mr.innerHTML=''; mesaDiv.innerHTML='';
   turno='jugador';
-  logDiv.innerText='Se repartieron las cartas';
+  logDiv.textContent='Se repartieron las cartas';
 
   const cartas = mezclar([...mazo]);
   manoJugador = cartas.slice(0,3);
   manoRival = cartas.slice(3,6);
 
-  manoJugador.forEach(c=>{
+  // Crear cartas jugador
+  manoJugador.forEach((c,index)=>{
     const d=document.createElement('div');
     d.className='carta';
-    d.innerHTML=`<span>${simbolos[c.p]}</span>${c.n}`;
-    d.onclick=()=>jugar(c,d);
+    d.textContent = simbolos[c.p]+' '+c.n;
+    d.onclick = ()=>jugar(c,index);
     mj.appendChild(d);
   });
 
+  // Crear cartas rival
   manoRival.forEach(()=>{
     const d=document.createElement('div');
     d.className='carta';
-    d.innerHTML='🂠';
+    d.textContent='🂠';
     mr.appendChild(d);
   });
 }
 
-function jugar(carta,div){
+function jugar(carta, idx){
   if(turno!=='jugador') return;
   turno='rival';
-  mj.removeChild(div);
+  mj.removeChild(mj.children[idx]);
   mesaDiv.innerHTML='';
 
-  const cRival = manoRival.pop();
-  mr.removeChild(mr.firstChild);
+  const cRival = manoRival.shift();
+  mr.removeChild(mr.children[0]);
 
   const dJ=document.createElement('div');
   dJ.className='carta';
-  dJ.innerHTML=`<span>${simbolos[carta.p]}</span>${carta.n}`;
+  dJ.textContent = simbolos[carta.p]+' '+carta.n;
 
   const dR=document.createElement('div');
   dR.className='carta';
-  dR.innerHTML=`<span>${simbolos[cRival.p]}</span>${cRival.n}`;
+  dR.textContent = simbolos[cRival.p]+' '+cRival.n;
 
   mesaDiv.appendChild(dJ);
   mesaDiv.appendChild(dR);
 
-  setTimeout(()=>{ evaluarMano(carta,cRival); },500);
+  setTimeout(()=>{ evaluarMano(carta,cRival); },400);
 }
 
-function evaluarMano(cJ, cR){
-  if(cJ.v > cR.v){ 
-    puntosJugador++;
-    logDiv.innerText="Ganaste la mano"; 
-  } else if(cR.v > cJ.v){
-    puntosRival++;
-    logDiv.innerText="Ganó el rival"; 
-  } else {
-    logDiv.innerText="Mano parda";
-  }
+function evaluarMano(cJ,cR){
+  if(cJ.v>cR.v){ puntosJugador++; logDiv.textContent="Ganaste la mano"; }
+  else if(cR.v>cJ.v){ puntosRival++; logDiv.textContent="Ganó el rival"; }
+  else { logDiv.textContent="Mano parda"; }
 
-  pJ.innerText=puntosJugador;
-  pR.innerText=puntosRival;
+  pJ.textContent = puntosJugador;
+  pR.textContent = puntosRival;
 
   setTimeout(()=>{ 
-    if(puntosJugador>=30){ logDiv.innerText="¡GANASTE EL JUEGO!"; reiniciar(); }
-    else if(puntosRival>=30){ logDiv.innerText="¡EL RIVAL GANA!"; reiniciar(); }
+    if(puntosJugador>=30){ logDiv.textContent="¡GANASTE EL JUEGO!"; reiniciar(); }
+    else if(puntosRival>=30){ logDiv.textContent="¡EL RIVAL GANA!"; reiniciar(); }
+    else if(manoJugador.length>0){ /* continua la mano */ }
     else { repartir(); }
   },1000);
 }
 
 function reiniciar(){
   puntosJugador=0; puntosRival=0;
-  pJ.innerText=0; pR.innerText=0;
+  pJ.textContent=0; pR.textContent=0;
   repartir();
 }
 
 function mazo(){
-  logDiv.innerText='Te fuiste al mazo';
+  logDiv.textContent='Te fuiste al mazo';
   repartir();
 }
 
 // ====== Inicio ======
 repartir();
 </script>
-
 </body>
 </html>
