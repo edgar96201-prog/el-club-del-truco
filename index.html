@@ -108,6 +108,44 @@
     }
 
     repartir();
-  </script>
-</body>
-</html>
+    <script>
+let manoJugador = ['1 Espada', '7 Oro', '3 Copa'];
+let turno = 'jugador';
+
+const manoDiv = document.getElementById('manoJugador');
+const logDiv = document.getElementById('log');
+
+function repartir() {
+  manoDiv.innerHTML = '';
+  manoJugador.forEach(carta => {
+    const div = document.createElement('div');
+    div.className = 'carta';
+    div.innerText = carta;
+    div.onclick = () => jugarCarta(carta);
+    manoDiv.appendChild(div);
+  });
+  log('Sos mano. Jugá una carta.');
+}
+
+function jugarCarta(carta) {
+  if (turno !== 'jugador') return;
+
+  manoJugador = manoJugador.filter(c => c !== carta);
+  repartir();
+  log('Jugaste: ' + carta);
+
+  turno = 'rival';
+  setTimeout(jugadaRival, 800);
+}
+
+function jugadaRival() {
+  log('El rival jugó una carta.');
+  turno = 'jugador';
+}
+
+function log(texto) {
+  logDiv.innerText = texto;
+}
+
+repartir();
+</script>
