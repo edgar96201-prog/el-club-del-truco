@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>El Club del Truco – Definitivo Aleatorio</title>
+<title>El Club del Truco – 2vs2 Definitivo</title>
 <style>
 body { background:#0b3d2e; color:#fff; font-family:Georgia, serif; text-align:center; margin:0; }
 h1 { margin:15px 0; }
@@ -16,7 +16,7 @@ h1 { margin:15px 0; }
 </head>
 <body>
 
-<h1>🃏 El Club del Truco – Aleatorio Definitivo</h1>
+<h1>🃏 El Club del Truco – 2vs2 Definitivo</h1>
 
 <div class="mesa">
 <h3>Puntaje</h3>
@@ -176,7 +176,6 @@ document.getElementById('btnRetruco').addEventListener('click',()=>{ if(trucoNiv
 document.getElementById('btnValeCuatro').addEventListener('click',()=>{ if(trucoNivel>=2){ trucoNivel=3; logDiv.textContent='Cantaste Vale cuatro'; }});
 document.getElementById('btnEnvido').addEventListener('click',()=>{
   envidoActivo=true;
-  // Rival responde según suma de cartas
   let rivalSuma = (manoRival[0]?.v||0) + (manoRival[1]?.v||0);
   let respuesta = rivalSuma>=20?'Quiero':'No quiero';
   logDiv.textContent=`Cantaste Envido - Rival dice: ${respuesta}`;
