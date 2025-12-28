@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>El Club del Truco – Versión Final</title>
+<title>El Club del Truco – Definitivo</title>
 <style>
 body { background:#0b3d2e; color:#fff; font-family:Georgia, serif; text-align:center; margin:0; }
 h1 { margin:15px 0; }
@@ -16,7 +16,7 @@ h1 { margin:15px 0; }
 </head>
 <body>
 
-<h1>🃏 El Club del Truco – Hasta 30 puntos</h1>
+<h1>🃏 El Club del Truco – Definitivo</h1>
 
 <div class="mesa">
 <h3>Puntaje</h3>
@@ -46,7 +46,10 @@ h1 { margin:15px 0; }
 
 <div class="botones">
   <button id="btnTruco">Truco</button>
+  <button id="btnRetruco">Retruco</button>
+  <button id="btnValeCuatro">Vale cuatro</button>
   <button id="btnEnvido">Envido</button>
+  <button id="btnFlor">Flor</button>
   <button id="btnQuiero">Quiero</button>
   <button id="btnNoQuiero">No quiero</button>
   <button id="btnMazo">Mazo</button>
@@ -55,13 +58,13 @@ h1 { margin:15px 0; }
 
 <script>
 // ===== Datos =====
-const cartasJugador = [
+let cartasJugador = [
   {id:'jugador1', n:'1', p:'Espada', v:14},
   {id:'jugador2', n:'7', p:'Oro', v:11},
   {id:'jugador3', n:'3', p:'Copa', v:10}
 ];
 
-const cartasRival = [
+let cartasRival = [
   {id:'rival1', n:'2', p:'Espada', v:9},
   {id:'rival2', n:'7', p:'Basto', v:4},
   {id:'rival3', n:'1', p:'Oro', v:8}
@@ -70,9 +73,10 @@ const cartasRival = [
 const simbolos = { 'Espada':'🗡️','Basto':'⚾','Oro':'🪙','Copa':'🍷' };
 
 let puntosJugador=0, puntosRival=0;
-let trucoActivo = false;
-let envidoActivo = false;
-let envidoPuntos = 2;
+let trucoNivel=0; // 0=sin truco,1=Truco,2=Retruco,3=Vale4
+let envidoActivo=false;
+let florActivo=false;
+let envidoPuntos=2, florPuntos=3;
 
 // DOM
 const logDiv = document.getElementById('log');
@@ -81,36 +85,35 @@ const pR = document.getElementById('pRival');
 
 // ===== Funciones =====
 function jugar(cartaJugador){
-  // Elegir carta del rival aleatoria
+  if(cartasRival.length===0) return; // Evitar error
   const idxRival = Math.floor(Math.random() * cartasRival.length);
   const cartaRival = cartasRival.splice(idxRival,1)[0];
 
-  // Mostrar cartas en mesa
   document.getElementById('mesaJ1').textContent = simbolos[cartaJugador.p]+' '+cartaJugador.n;
   document.getElementById('mesaR1').textContent = simbolos[cartaRival.p]+' '+cartaRival.n;
 
-  // Evaluar ganador mano
-  if(cartaJugador.v > cartaRival.v){ puntosJugador++; logDiv.textContent="Ganaste la mano"; }
-  else if(cartaRival.v > cartaJugador.v){ puntosRival++; logDiv.textContent="Ganó el rival"; }
-  else { logDiv.textContent="Mano parda"; }
+  // Comparar cartas
+  let puntosMano = trucoNivel || 1;
+  if(cartaJugador.v > cartaRival.v){ puntosJugador+=puntosMano; logDiv.textContent=`Ganaste la mano +${puntosMano}`; }
+  else if(cartaRival.v > cartaJugador.v){ puntosRival+=puntosMano; logDiv.textContent=`Rival gana la mano +${puntosMano}`; }
+  else { logDiv.textContent='Mano parda'; }
 
-  pJ.textContent = puntosJugador;
-  pR.textContent = puntosRival;
+  pJ.textContent=puntosJugador;
+  pR.textContent=puntosRival;
 
-  // Remover carta jugada del jugador
   cartasJugador.splice(cartasJugador.indexOf(cartaJugador),1);
   document.getElementById(cartaJugador.id).textContent='';
+
+  trucoNivel=0; // Reset truco después de mano
 
   setTimeout(()=>{
     if(puntosJugador>=30){ logDiv.textContent="¡GANASTE EL JUEGO!"; reiniciar(); }
     else if(puntosRival>=30){ logDiv.textContent="¡EL RIVAL GANA!"; reiniciar(); }
-    else if(cartasJugador.length>0){ siguienteMano(); }
-    else { repartirMano(); }
+    else { siguienteMano(); }
   },800);
 }
 
 function siguienteMano(){
-  // Limpiar mesa
   document.getElementById('mesaJ1').textContent='';
   document.getElementById('mesaR1').textContent='';
   logDiv.textContent='Siguiente mano';
@@ -124,17 +127,16 @@ function reiniciar(){
 }
 
 function repartirMano(){
-  // Restaurar cartas
-  cartasJugador.splice(0,3,
+  cartasJugador = [
     {id:'jugador1', n:'1', p:'Espada', v:14},
     {id:'jugador2', n:'7', p:'Oro', v:11},
     {id:'jugador3', n:'3', p:'Copa', v:10}
-  );
-  cartasRival.splice(0,3,
+  ];
+  cartasRival = [
     {id:'rival1', n:'2', p:'Espada', v:9},
     {id:'rival2', n:'7', p:'Basto', v:4},
     {id:'rival3', n:'1', p:'Oro', v:8}
-  );
+  ];
 
   document.getElementById('jugador1').textContent='🗡️ 1';
   document.getElementById('jugador2').textContent='🪙 7';
@@ -153,36 +155,21 @@ document.getElementById('jugador1').addEventListener('click',()=>jugar(cartasJug
 document.getElementById('jugador2').addEventListener('click',()=>jugar(cartasJugador[1]));
 document.getElementById('jugador3').addEventListener('click',()=>jugar(cartasJugador[2]));
 
-// ===== Botones Truco / Envido =====
-document.getElementById('btnTruco').addEventListener('click',()=>{
-  trucoActivo=true;
-  logDiv.textContent='Cantaste Truco';
-});
-document.getElementById('btnEnvido').addEventListener('click',()=>{
-  envidoActivo=true;
-  logDiv.textContent='Cantaste Envido';
-});
+// ===== Botones Truco / Envido / Flor =====
+document.getElementById('btnTruco').addEventListener('click',()=>{ trucoNivel=1; logDiv.textContent='Cantaste Truco'; });
+document.getElementById('btnRetruco').addEventListener('click',()=>{ if(trucoNivel>=1){ trucoNivel=2; logDiv.textContent='Cantaste Retruco'; }});
+document.getElementById('btnValeCuatro').addEventListener('click',()=>{ if(trucoNivel>=2){ trucoNivel=3; logDiv.textContent='Cantaste Vale cuatro'; }});
+document.getElementById('btnEnvido').addEventListener('click',()=>{ envidoActivo=true; logDiv.textContent='Cantaste Envido'; });
+document.getElementById('btnFlor').addEventListener('click',()=>{ florActivo=true; logDiv.textContent='Cantaste Flor'; });
+
+// ===== Botones Quiero / No quiero =====
 document.getElementById('btnQuiero').addEventListener('click',()=>{
-  if(envidoActivo){
-    puntosJugador += envidoPuntos;
-    pJ.textContent = puntosJugador;
-    logDiv.textContent='Aceptaste Envido +'+envidoPuntos+' puntos';
-    envidoActivo=false;
-  } else if(trucoActivo){
-    logDiv.textContent='Aceptaste Truco';
-    trucoActivo=false;
-  }
+  if(envidoActivo){ puntosJugador+=envidoPuntos; pJ.textContent=puntosJugador; logDiv.textContent='Aceptaste Envido +'+envidoPuntos; envidoActivo=false; }
+  else if(florActivo){ puntosJugador+=florPuntos; pJ.textContent=puntosJugador; logDiv.textContent='Aceptaste Flor +'+florPuntos; florActivo=false; }
 });
 document.getElementById('btnNoQuiero').addEventListener('click',()=>{
-  if(envidoActivo){
-    logDiv.textContent='No quisiste Envido';
-    envidoActivo=false;
-  } else if(trucoActivo){
-    logDiv.textContent='No quisiste Truco';
-    trucoActivo=false;
-    puntosRival+=1;
-    pR.textContent = puntosRival;
-  }
+  if(envidoActivo){ logDiv.textContent='No quisiste Envido'; envidoActivo=false; puntosRival+=envidoPuntos; pR.textContent=puntosRival; }
+  else if(florActivo){ logDiv.textContent='No quisiste Flor'; florActivo=false; puntosRival+=florPuntos; pR.textContent=puntosRival; }
 });
 document.getElementById('btnMazo').addEventListener('click',reiniciar);
 
