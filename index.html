@@ -128,6 +128,135 @@
 
     repartir();
   </script>
+  <script>
+/* ===== RANKING REAL ===== */
+const ranking = {
+  '1 Espada': 1,
+  '1 Basto': 2,
+  '7 Espada': 3,
+  '7 Oro': 4,
+  '3': 5,
+  '3 Copa': 5,
+  '2': 6,
+  '1 Oro': 7,
+  '1 Copa': 7,
+  '12': 8,
+  '11': 9,
+  '10': 10,
+  '7 Copa': 11,
+  '7 Basto': 11,
+  '6': 12,
+  '5': 13,
+  '4': 14
+};
 
-</body>
-</html>
+/* ===== ESTADO DEL JUEGO ===== */
+let manoJugador = ['1 Espada','7 Oro','3 Copa'];
+let turno = 'jugador';
+
+let puntosJugador = 0;
+let puntosRival = 0;
+
+let estadoTruco = 0; // 0=sin cantar | 2=Truco | 3=Retruco | 4=Vale4
+let trucoCantadoPor = null;
+
+const manoDiv = document.getElementById('manoJugador');
+const logDiv = document.getElementById('log');
+
+function repartir() {
+  manoDiv.innerHTML = '';
+  manoJugador.forEach(carta => {
+    const div = document.createElement('div');
+    div.className = 'carta';
+    div.innerText = carta;
+    div.onclick = () => jugarCarta(carta);
+    manoDiv.appendChild(div);
+  });
+}
+
+/* ===== JUGAR CARTA ===== */
+function jugarCarta(cartaJugador) {
+  if (turno !== 'jugador') return;
+
+  manoJugador = manoJugador.filter(c => c !== cartaJugador);
+  repartir();
+
+  const cartaRival = cartaRivalRandom();
+
+  const rJ = ranking[cartaJugador];
+  const rR = ranking[cartaRival];
+
+  if (rJ < rR) {
+    puntosJugador += estadoTruco || 1;
+    log(`GANASTE la mano (${estadoTruco || 1} punto/s)`);
+  } else if (rJ > rR) {
+    puntosRival += estadoTruco || 1;
+    log(`PERDISTE la mano (${estadoTruco || 1} punto/s)`);
+  } else {
+    log('MANO PARDA');
+  }
+
+  resetTruco();
+  turno = 'rival';
+  setTimeout(() => turno = 'jugador', 800);
+}
+
+/* ===== TRUCO ===== */
+function cantar(texto) {
+  if (texto === 'Truco' && estadoTruco === 0) {
+    estadoTruco = 2;
+    trucoCantadoPor = 'jugador';
+    log('Cantaste TRUCO');
+  } 
+  else if (texto === 'Truco' && estadoTruco === 2) {
+    estadoTruco = 3;
+    trucoCantadoPor = 'jugador';
+    log('Cantaste RETRUCO');
+  } 
+  else if (texto === 'Truco' && estadoTruco === 3) {
+    estadoTruco = 4;
+    trucoCantadoPor = 'jugador';
+    log('Cantaste VALE CUATRO');
+  }
+  else if (texto === 'Quiero') {
+    log('Quiero');
+  }
+  else if (texto === 'No quiero') {
+    const puntos = estadoTruco - 1;
+    if (trucoCantadoPor === 'jugador') {
+      puntosRival += puntos;
+      log(`No quiso. Rival gana ${puntos} punto/s`);
+    } else {
+      puntosJugador += puntos;
+      log(`No quiso. Ganás ${puntos} punto/s`);
+    }
+    resetTruco();
+  }
+}
+
+/* ===== UTILIDADES ===== */
+function cartaRivalRandom() {
+  const posibles = ['4','5','6','7 Copa','10','11','12'];
+  return posibles[Math.floor(Math.random() * posibles.length)];
+}
+
+function resetTruco() {
+  estadoTruco = 0;
+  trucoCantadoPor = null;
+}
+
+function mazo() {
+  puntosRival += estadoTruco || 1;
+  log('Te fuiste al mazo');
+  resetTruco();
+}
+
+function log(texto) {
+  logDiv.innerText = 
+    texto + 
+    ` | Vos: ${puntosJugador} - Rival: ${puntosRival}`;
+}
+
+repartir();
+      </script>
+
