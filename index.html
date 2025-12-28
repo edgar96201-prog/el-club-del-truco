@@ -129,6 +129,75 @@
 
   repartir();
 </script>
+<script>
+let puntosJugador = 0;
+let puntosRival = 0;
 
-</body>
-</html>
+let estadoTruco = 0; 
+// 0 nada – 1 Truco – 2 Retruco – 3 Vale 4
+
+const cartas = ['1 Espada','7 Oro','3 Copa'];
+const manoDiv = document.getElementById('manoJugador');
+const mesaDiv = document.getElementById('mesa');
+const logDiv = document.getElementById('log');
+
+const pJugadorSpan = document.getElementById('pJugador');
+const pRivalSpan = document.getElementById('pRival');
+
+function repartir() {
+  manoDiv.innerHTML = '';
+  mesaDiv.innerHTML = '';
+  estadoTruco = 0;
+  cartas.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'carta';
+    div.innerText = c;
+    div.onclick = () => jugarCarta(div, c);
+    manoDiv.appendChild(div);
+  });
+  log('Se repartieron las cartas');
+}
+
+function jugarCarta(div, carta) {
+  mesaDiv.appendChild(div);
+  div.onclick = null;
+  log('Jugaste: ' + carta);
+}
+
+function cantar(texto) {
+  if (texto === 'Truco' && estadoTruco === 0) {
+    estadoTruco = 1;
+    log('Cantaste TRUCO');
+  } 
+  else if (texto === 'Quiero' && estadoTruco > 0) {
+    sumarPuntos(estadoTruco + 1);
+    log('¡Quiero!');
+    repartir();
+  } 
+  else if (texto === 'No quiero' && estadoTruco > 0) {
+    sumarPuntos(estadoTruco);
+    log('No quiero');
+    repartir();
+  } 
+  else {
+    log('No podés cantar eso ahora');
+  }
+}
+
+function sumarPuntos(puntos) {
+  puntosJugador += puntos;
+  pJugadorSpan.innerText = puntosJugador;
+}
+
+function mazo() {
+  log('Te fuiste al mazo');
+  repartir();
+}
+
+function log(texto) {
+  logDiv.innerText = texto;
+}
+
+repartir();
+</script>
+
