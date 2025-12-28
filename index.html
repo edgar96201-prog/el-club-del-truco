@@ -2,39 +2,47 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>El Club del Truco – 2vs2 con cartas reales</title>
+<title>El Club del Truco – 1vs1 Tradicional</title>
 <style>
 body { background:#0b3d2e; color:#fff; font-family:Georgia, serif; text-align:center; margin:0; }
 h1 { margin:15px 0; }
-.mesa { background:#145a32; border:6px solid #4a2c16; border-radius:20px; margin:20px auto; padding:15px; max-width:900px; }
+.menu { margin-top:50px; }
+.menu button { margin:10px; padding:15px 25px; font-size:18px; border-radius:10px; cursor:pointer; }
+.mesa { display:none; background:#145a32; border:6px solid #4a2c16; border-radius:20px; margin:20px auto; padding:15px; max-width:900px; }
 .cartas { display:flex; justify-content:center; gap:12px; min-height:130px; flex-wrap:wrap; }
-.carta { width:80px; height:120px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
-.carta img { width:80px; height:120px; border-radius:8px; }
+.carta { width:80px; height:120px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; background:#fdf6e3; }
+.carta img { width:100%; height:100%; object-fit:cover; }
 .rival .carta { cursor: default; }
 .botones button { margin:5px; padding:10px 15px; font-size:15px; border-radius:8px; border:none; cursor:pointer; }
 .log { background:#0e6655; padding:10px; border-radius:10px; min-height:80px; margin-top:10px;}
+#temporizador { font-size:18px; font-weight:bold; margin-top:5px; }
 </style>
 </head>
 <body>
 
-<h1>🃏 El Club del Truco – 2vs2 Estratégico</h1>
+<h1>🃏 El Club del Truco</h1>
 
-<div class="mesa">
+<div class="menu" id="menuModalidad">
+  <button id="btn1vs1">1 vs 1</button>
+  <button id="btn2vs2">2 vs 2 (Próximamente)</button>
+  <button id="btn3vs3">3 vs 3 (Próximamente)</button>
+</div>
+
+<div class="mesa" id="mesaJuego">
 <h3>Puntaje</h3>
-<p>Tu equipo: <span id="pEquipo">0</span> | Equipo rival: <span id="pRival">0</span></p>
+<p>Tu puntaje: <span id="pJugador">0</span> | Rival: <span id="pRival">0</span></p>
 
-<h3>Rivales</h3>
+<h3>Rival</h3>
 <div class="cartas rival" id="manoRival">
-  <div class="carta" id="rival1"><img src="imagenes/back.png"></div>
-  <div class="carta" id="rival2"><img src="imagenes/back.png"></div>
+  <div class="carta" id="cartaRival1"></div>
+  <div class="carta" id="cartaRival2"></div>
+  <div class="carta" id="cartaRival3"></div>
 </div>
 
 <h3>Mesa</h3>
 <div class="cartas" id="mesa">
-  <div class="carta" id="mesaJ1"></div>
-  <div class="carta" id="mesaJ2"></div>
-  <div class="carta" id="mesaR1"></div>
-  <div class="carta" id="mesaR2"></div>
+  <div class="carta" id="mesaJ"></div>
+  <div class="carta" id="mesaR"></div>
 </div>
 
 <h3>Tu mano</h3>
@@ -44,6 +52,7 @@ h1 { margin:15px 0; }
   <div class="carta" id="jugador3"></div>
 </div>
 
+<div id="temporizador">Tiempo restante: <span id="timer">15</span> s</div>
 <div class="log" id="log"></div>
 
 <div class="botones">
@@ -54,140 +63,138 @@ h1 { margin:15px 0; }
   <button id="btnFlor">Flor</button>
   <button id="btnQuiero">Quiero</button>
   <button id="btnNoQuiero">No quiero</button>
-  <button id="btnMazo">Mazo</button>
+  <button id="btnMazo">Ir al mazo</button>
 </div>
 </div>
 
 <script>
-// ===== Sonidos =====
-function reproducirSonido(nombre){ new Audio(nombre).play(); }
+// ===== Baraja Tradicional =====
+const baraja = [];
+const palos = ['Espada','Basto','Oro','Copa'];
+const numeros = [1,2,3,4,5,6,7,10,11,12];
+numeros.forEach(n=>{
+  palos.forEach(p=>{
+    baraja.push({n,p,v:n}); // valor simple para demo
+  });
+});
 
-// ===== Baraja y valores =====
-const baraja = [
-  {n:'1',p:'Espada',v:14},{n:'1',p:'Basto',v:13},{n:'7',p:'Espada',v:12},{n:'7',p:'Oro',v:11},
-  {n:'3',p:'Espada',v:10},{n:'3',p:'Basto',v:10},{n:'3',p:'Oro',v:10},{n:'3',p:'Copa',v:10},
-  {n:'2',p:'Espada',v:9},{n:'2',p:'Basto',v:9},{n:'2',p:'Oro',v:9},{n:'2',p:'Copa',v:9},
-  {n:'1',p:'Oro',v:8},{n:'1',p:'Copa',v:8},{n:'12',p:'Espada',v:7},{n:'12',p:'Basto',v:7},
-  {n:'12',p:'Oro',v:7},{n:'12',p:'Copa',v:7},{n:'11',p:'Espada',v:6},{n:'11',p:'Basto',v:6},
-  {n:'11',p:'Oro',v:6},{n:'11',p:'Copa',v:6},{n:'10',p:'Espada',v:5},{n:'10',p:'Basto',v:5},
-  {n:'10',p:'Oro',v:5},{n:'10',p:'Copa',v:5},{n:'7',p:'Basto',v:4},{n:'7',p:'Copa',v:4},
-  {n:'6',p:'Espada',v:3},{n:'6',p:'Basto',v:3},{n:'6',p:'Oro',v:3},{n:'6',p:'Copa',v:3},
-  {n:'5',p:'Espada',v:2},{n:'5',p:'Basto',v:2},{n:'5',p:'Oro',v:2},{n:'5',p:'Copa',v:2},
-  {n:'4',p:'Espada',v:1},{n:'4',p:'Basto',v:1},{n:'4',p:'Oro',v:1},{n:'4',p:'Copa',v:1}
-];
+let manoJugador=[], manoRival=[], puntosJugador=0, puntosRival=0;
+let turno='jugador', timerInterval, tiempo=15;
+let rondaActual=0;
 
-let puntosEquipo=0, puntosRival=0;
-let trucoNivel=0, envidoActivo=false, florActivo=false, rondaActual=0;
-let manoJugador=[], manoCompañero=[], manoRival=[];
+// ===== Voz =====
+const synth = window.speechSynthesis;
+function hablar(texto){
+  const msg = new SpeechSynthesisUtterance();
+  msg.text = texto;
+  msg.lang = 'es-AR';
+  synth.speak(msg);
+}
 
-const logDiv = document.getElementById('log');
-const pE = document.getElementById('pEquipo');
-const pR = document.getElementById('pRival');
+// ===== Efectos de sonido =====
+const sonidoCarta = new Audio('https://actions.google.com/sounds/v1/cartoon/card_flip.ogg');
+const sonidoMazo = new Audio('https://actions.google.com/sounds/v1/cartoon/shuffle_cards.ogg');
 
-function barajar(array){ let a=array.slice(); for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a;}
+function reproducirCarta(){ sonidoCarta.play(); }
+function reproducirMazo(){ sonidoMazo.play(); }
 
-function repartirMano(){
+// ===== Barajar =====
+function barajar(array){ let a=array.slice(); for(let i=a.length-1;i>0;i--){ let j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a;}
+
+// ===== Repartir =====
+function repartir(){
+  reproducirMazo();
   let b = barajar(baraja);
   manoJugador = b.splice(0,3);
-  manoCompañero = b.splice(0,3);
-  manoRival = b.splice(0,4);
+  manoRival = b.splice(0,3);
 
   for(let i=0;i<3;i++){
-    document.getElementById('jugador'+(i+1)).innerHTML=`<img src="imagenes/${manoJugador[i].n}_${manoJugador[i].p}.png">`;
+    document.getElementById('jugador'+(i+1)).innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/${manoJugador[i].n}de${manoJugador[i].p.toLowerCase()}.png/80px-${manoJugador[i].n}de${manoJugador[i].p.toLowerCase()}.png">`;
+    document.getElementById('cartaRival'+(i+1)).innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Card_back_40.png/80px-Card_back_40.png">`;
   }
 
-  document.getElementById('mesaJ1').innerHTML='';
-  document.getElementById('mesaJ2').innerHTML='';
-  document.getElementById('mesaR1').innerHTML='<img src="imagenes/back.png">';
-  document.getElementById('mesaR2').innerHTML='<img src="imagenes/back.png">';
-
+  document.getElementById('mesaJ').innerHTML='';
+  document.getElementById('mesaR').innerHTML='';
   rondaActual=0;
-  logDiv.textContent='Se repartieron cartas aleatorias';
+  turno='jugador';
+  iniciarTurno();
+  log('Cartas repartidas. Es tu turno.');
 }
 
-function jugarCarta(indice){
-  if(rondaActual>=3) return;
-  let cartaJugador = manoJugador.splice(indice,1)[0];
-  let cartaComp = manoCompañero.shift();
-  let cartaR1 = manoRival.splice(0,1)[0];
-  let cartaR2 = manoRival.splice(0,1)[0];
+// ===== Turnos =====
+function iniciarTurno(){
+  tiempo=15;
+  document.getElementById('timer').textContent=tiempo;
+  clearInterval(timerInterval);
+  timerInterval = setInterval(()=>{
+    tiempo--;
+    document.getElementById('timer').textContent=tiempo;
+    if(tiempo<=0){ clearInterval(timerInterval); if(turno==='jugador'){ jugarCartaJugador(0);} }
+  },1000);
+}
 
-  document.getElementById('mesaJ1').innerHTML=`<img src="imagenes/${cartaJugador.n}_${cartaJugador.p}.png">`;
-  document.getElementById('mesaJ2').innerHTML=`<img src="imagenes/${cartaComp.n}_${cartaComp.p}.png">`;
-  document.getElementById('mesaR1').innerHTML=`<img src="imagenes/${cartaR1.n}_${cartaR1.p}.png">`;
-  document.getElementById('mesaR2').innerHTML=`<img src="imagenes/${cartaR2.n}_${cartaR2.p}.png">`;
+// ===== Jugar cartas =====
+function jugarCartaJugador(indice){
+  if(turno!=='jugador') return;
+  let carta = manoJugador.splice(indice,1)[0];
+  document.getElementById('mesaJ').innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/${carta.n}de${carta.p.toLowerCase()}.png/80px-${carta.n}de${carta.p.toLowerCase()}.png">`;
+  reproducirCarta();
+  hablar(`Jugaste ${carta.n} de ${carta.p}`);
+  turno='rival';
+  setTimeout(jugarCartaRival,1000);
+}
 
+function jugarCartaRival(){
+  if(turno!=='rival') return;
+  let carta = manoRival.shift();
+  document.getElementById('mesaR').innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/${carta.n}de${carta.p.toLowerCase()}.png/80px-${carta.n}de${carta.p.toLowerCase()}.png">`;
+  reproducirCarta();
+  hablar(`Rival jugó su carta`);
+  turno='jugador';
+  evaluarRonda();
+}
+
+function evaluarRonda(){
   rondaActual++;
-
-  let equipoGana=0, rivalGana=0;
-  [[cartaJugador,cartaR1],[cartaComp,cartaR2]].forEach(par=>{
-    if(par[0].v>par[1].v) equipoGana++; else if(par[1].v>par[0].v) rivalGana++;
-  });
-
-  if(rondaActual===3){
-    let puntosMano = trucoNivel || 1;
-    if(equipoGana>rivalGana){ puntosEquipo+=puntosMano; logDiv.textContent='Tu equipo gana la mano +'+puntosMano; }
-    else if(rivalGana>equipoGana){ puntosRival+=puntosMano; logDiv.textContent='Rival gana la mano +'+puntosMano; }
-    else { logDiv.textContent='Mano parda'; }
-
-    pE.textContent=puntosEquipo;
-    pR.textContent=puntosRival;
-    trucoNivel=0;
-
-    setTimeout(()=>{
-      if(puntosEquipo>=30){ reproducirSonido('mazo.mp3'); logDiv.textContent="¡GANASTE EL JUEGO!"; reiniciar(); }
-      else if(puntosRival>=30){ reproducirSonido('mazo.mp3'); logDiv.textContent="¡EL RIVAL GANA!"; reiniciar(); }
-      else siguienteMano();
-    },1200);
+  if(rondaActual<3){
+    setTimeout(iniciarTurno,1000);
+  } else {
+    puntosJugador+=1; puntosRival+=0; // demo simple, se puede programar puntaje real
+    document.getElementById('pJugador').textContent=puntosJugador;
+    document.getElementById('pRival').textContent=puntosRival;
+    log('Fin de la mano. Puntaje actualizado.');
+    setTimeout(repartir,2000);
   }
 }
 
-function siguienteMano(){
-  document.getElementById('mesaJ1').innerHTML='';
-  document.getElementById('mesaJ2').innerHTML='';
-  document.getElementById('mesaR1').innerHTML='<img src="imagenes/back.png">';
-  document.getElementById('mesaR2').innerHTML='<img src="imagenes/back.png">';
-  logDiv.textContent='Siguiente mano';
+// ===== Log =====
+function log(mensaje){ document.getElementById('log').textContent = mensaje; }
+
+// ===== Eventos botones =====
+for(let i=0;i<3;i++){
+  document.getElementById('jugador'+(i+1)).addEventListener('click',()=>jugarCartaJugador(i));
+
 }
 
-function reiniciar(){
-  puntosEquipo=0; puntosRival=0;
-  pE.textContent=0; pR.textContent=0;
-  repartirMano();
-}
-
-// ===== Eventos cartas =====
-document.getElementById('jugador1').addEventListener('click',()=>jugarCarta(0));
-document.getElementById('jugador2').addEventListener('click',()=>jugarCarta(1));
-document.getElementById('jugador3').addEventListener('click',()=>jugarCarta(2));
-
-// ===== Botones =====
-document.getElementById('btnTruco').addEventListener('click',()=>{ reproducirSonido('truco.mp3'); trucoNivel=1; logDiv.textContent='Cantaste Truco'; });
-document.getElementById('btnRetruco').addEventListener('click',()=>{ if(trucoNivel>=1){ reproducirSonido('retruco.mp3'); trucoNivel=2; logDiv.textContent='Cantaste Retruco'; }});
-document.getElementById('btnValeCuatro').addEventListener('click',()=>{ if(trucoNivel>=2){ reproducirSonido('vale4.mp3'); trucoNivel=3; logDiv.textContent='Cantaste Vale cuatro'; }});
-document.getElementById('btnEnvido').addEventListener('click',()=>{
-  reproducirSonido('envido.mp3'); 
-  envidoActivo=true;
-  let rivalSuma = (manoRival[0]?.v||0) + (manoRival[1]?.v||0);
-  let respuesta = rivalSuma>=20?'Quiero':'No quiero';
-  logDiv.textContent=`Cantaste Envido - Rival dice: ${respuesta}`;
-  if(respuesta==='Quiero'){ puntosEquipo+=2; pE.textContent=puntosEquipo; } else { puntosRival+=2; pR.textContent=puntosRival; }
+document.getElementById('btn1vs1').addEventListener('click',()=>{
+  document.getElementById('menuModalidad').style.display='none';
+  document.getElementById('mesaJuego').style.display='block';
+  repartir();
 });
-document.getElementById('btnFlor').addEventListener('click',()=>{ reproducirSonido('flor.mp3'); florActivo=true; logDiv.textContent='Cantaste Flor'; });
 
-document.getElementById('btnQuiero').addEventListener('click',()=>{
-  reproducirSonido('quiero.mp3');
-  if(envidoActivo){ puntosEquipo+=2; pE.textContent=puntosEquipo; envidoActivo=false; logDiv.textContent='Aceptaste Envido'; }
-  if(florActivo){ puntosEquipo+=3; pE.textContent=puntosEquipo; florActivo=false; logDiv.textContent='Aceptaste Flor'; }
+document.getElementById('btnMazo').addEventListener('click',()=>{
+  repartir();
+  hablar('Me voy al mazo');
 });
-document.getElementById('btnNoQuiero').addEventListener('click',()=>{
-  reproducirSonido('noquiero.mp3');
-  if(envidoActivo){ puntosRival+=2; pR.textContent=puntosRival; envidoActivo=false; logDiv.textContent='No quisiste Envido'; }
-  if(florActivo){ puntosRival+=3; pR.textContent=puntosRival; florActivo=false; logDiv.textContent='No quisiste Flor'; }
-});
-document.getElementById('btnMazo').addEventListener('click',()=>{ reproducirSonido('mazo.mp3'); reiniciar(); });
 
-repartirMano();
+document.getElementById('btnTruco').addEventListener('click',()=>{ hablar('Truco'); log('Cantaste Truco'); });
+document.getElementById('btnRetruco').addEventListener('click',()=>{ hablar('Retruco'); log('Cantaste Retruco'); });
+document.getElementById('btnValeCuatro').addEventListener('click',()=>{ hablar('Vale cuatro'); log('Cantaste Vale cuatro'); });
+document.getElementById('btnEnvido').addEventListener('click',()=>{ hablar('Envido'); log('Cantaste Envido'); });
+document.getElementById('btnFlor').addEventListener('click',()=>{ hablar('Flor'); log('Cantaste Flor'); });
+document.getElementById('btnQuiero').addEventListener('click',()=>{ hablar('Quiero'); log('Dijiste Quiero'); });
+document.getElementById('btnNoQuiero').addEventListener('click',()=>{ hablar('No quiero'); log('Dijiste No Quiero'); });
+
 </script>
 </body>
 </html>
