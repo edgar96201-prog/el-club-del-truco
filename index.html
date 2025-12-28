@@ -2,16 +2,16 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>El Club del Truco – 1vs1 Definitivo</title>
+<title>El Club del Truco – Mesa Tradicional 1vs1</title>
 <style>
 body { margin:0; font-family: Georgia, serif; background:#0b3d2e; color:#fff; text-align:center;}
-h1 { margin:15px 0; }
-.menu, .mesa { max-width: 900px; margin:20px auto; }
+h1 { margin:10px 0; }
+.menu, .mesa { max-width: 1000px; margin:10px auto; }
 .menu input, .menu select { margin:5px; padding:8px; font-size:16px; }
 .menu button { margin:10px; padding:12px 25px; font-size:16px; border-radius:8px; cursor:pointer; }
 .mesa { display:none; background:#145a32; border:6px solid #4a2c16; border-radius:20px; padding:15px; }
 .cartas { display:flex; justify-content:center; gap:12px; min-height:130px; flex-wrap:wrap; }
-.carta { width:80px; height:120px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; background:#fdf6e3; transition: transform 0.2s;}
+.carta { width:80px; height:120px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; transition: transform 0.3s; }
 .carta:hover { transform: scale(1.05); }
 .carta img { width:100%; height:100%; object-fit:cover; }
 .rival .carta { cursor: default; }
@@ -19,6 +19,7 @@ h1 { margin:15px 0; }
 .log { background:#0e6655; padding:10px; border-radius:10px; min-height:80px; margin-top:10px;}
 #temporizador { font-size:16px; font-weight:bold; margin-top:5px; }
 #tantoJugador, #tantoRival { font-weight:bold; margin-top:5px; }
+.mesaCentral { display:flex; justify-content:center; gap:50px; margin:15px 0; }
 </style>
 </head>
 <body>
@@ -43,7 +44,6 @@ h1 { margin:15px 0; }
 </div>
 
 <div class="mesa" id="mesaJuego">
-<h3>Puntaje</h3>
 <p><span id="nombreJugadorDisplay">Jugador</span>: <span id="pJugador">0</span> | Rival: <span id="pRival">0</span></p>
 <p id="tantoJugador">Tus tantos: 0</p>
 <p id="tantoRival">Tantos rival: 0</p>
@@ -56,7 +56,7 @@ h1 { margin:15px 0; }
 </div>
 
 <h3>Mesa</h3>
-<div class="cartas" id="mesa">
+<div class="mesaCentral">
   <div class="carta" id="mesaJ"></div>
   <div class="carta" id="mesaR"></div>
 </div>
@@ -83,6 +83,9 @@ h1 { margin:15px 0; }
 </div>
 </div>
 
+<audio id="sonidoMazo" src="https://www.soundjay.com/button/sounds/button-3.mp3"></audio>
+<audio id="sonidoCarta" src="https://www.soundjay.com/button/sounds/button-16.mp3"></audio>
+
 <script>
 // ===== Baraja y valores =====
 const baraja=[
@@ -100,38 +103,25 @@ const baraja=[
 let manoJugador=[], manoRival=[], puntosJugador=0, puntosRival=0;
 let turno='jugador', timerInterval, tiempo=15;
 let puntajeMax=15;
-let envidoActivo=false, florActivo=false;
-let trucoPuntos=1, trucoActivo=false;
 
 // ===== Voz =====
 const synth = window.speechSynthesis;
 function hablar(texto){ const msg = new SpeechSynthesisUtterance(); msg.text=texto; msg.lang='es-AR'; synth.speak(msg); }
 
+// ===== Sonidos =====
+const sonidoMazo = document.getElementById('sonidoMazo');
+const sonidoCarta = document.getElementById('sonidoCarta');
+function reproducirMazo(){ sonidoMazo.play(); }
+function reproducirCarta(){ sonidoCarta.play(); }
+
 // ===== Funciones =====
 function barajar(array){ let a=array.slice(); for(let i=a.length-1;i>0;i--){ let j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
-
-function getImage(carta){
-  const p = carta.p.toLowerCase();
-  return `https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/${carta.n}_de_${p}.svg/80px-${carta.n}_de_${p}.svg.png`;
-}
-
-// ===== Calcular Envido =====
-function calcularEnvido(mano){
-  let suits = {};
-  mano.forEach(c => { if(!suits[c.p]) suits[c.p]=[]; suits[c.p].push(c.n); });
-  let max = 0;
-  for(let s in suits){
-    let vals = suits[s];
-    if(vals.length>1){
-      let sum = vals.sort((a,b)=>b-a)[0]+vals.sort((a,b)=>b-a)[1]+20;
-      if(sum>max) max=sum;
-    } else { if(vals[0]>max) max=vals[0]; }
-  }
-  return max;
-}
+function getImage(carta){ const p = carta.p.toLowerCase(); return `https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/${carta.n}_de_${p}.svg/80px-${carta.n}_de_${p}.svg.png`; }
+function calcularEnvido(mano){ let suits={}; mano.forEach(c=>{ if(!suits[c.p]) suits[c.p]=[]; suits[c.p].push(c.n); }); let max=0; for(let s in suits){ let vals=suits[s]; if(vals.length>1){ let sum=vals.sort((a,b)=>b-a)[0]+vals.sort((a,b)=>b-a)[1]+20; if(sum>max) max=sum;} else{ if(vals[0]>max) max=vals[0];}} return max;}
 
 // ===== Repartir cartas =====
 function repartir(){
+  reproducirMazo();
   let b=barajar(baraja);
   manoJugador=b.splice(0,3);
   manoRival=b.splice(0,3);
@@ -142,28 +132,8 @@ function repartir(){
   document.getElementById('mesaJ').innerHTML=''; document.getElementById('mesaR').innerHTML='';
   document.getElementById('tantoJugador').textContent=`Tus tantos: ${calcularEnvido(manoJugador)}`;
   document.getElementById('tantoRival').textContent=`Tantos rival: ${calcularEnvido(manoRival)}`;
-  setTimeout(iaCanta, 1000);
+  turno='jugador';
   iniciarTurno(); log('Cartas repartidas. Es tu turno.');
-}
-
-// ===== Evaluar puntaje y final =====
-function sumarPuntos(jugador, puntos){
-  if(jugador==='jugador'){ puntosJugador+=puntos; document.getElementById('pJugador').textContent=puntosJugador; }
-  else { puntosRival+=puntos; document.getElementById('pRival').textContent=puntosRival; }
-  if(puntosJugador>=puntajeMax){ alert('¡Ganaste!'); reiniciar(); }
-  if(puntosRival>=puntajeMax){ alert('¡Perdiste!'); reiniciar(); }
-}
-
-function reiniciar(){ puntosJugador=0; puntosRival=0; repartir(); }
-
-// ===== Turnos y temporizador =====
-function iniciarTurno(){
-  tiempo=15; document.getElementById('timer').textContent=tiempo;
-  clearInterval(timerInterval);
-  timerInterval=setInterval(()=>{
-    tiempo--; document.getElementById('timer').textContent=tiempo;
-    if(tiempo<=0){ clearInterval(timerInterval); if(turno==='jugador'){ jugarCartaJugador(0);} }
-  },1000);
 }
 
 // ===== Jugar cartas =====
@@ -171,21 +141,27 @@ function jugarCartaJugador(indice){
   if(turno!=='jugador') return;
   let carta=manoJugador.splice(indice,1)[0];
   document.getElementById('mesaJ').innerHTML=`<img src="${getImage(carta)}">`;
-  hablar(`Jugaste ${carta.n} de ${carta.p}`);
+  reproducirCarta(); hablar(`Jugaste ${carta.n} de ${carta.p}`);
   turno='rival'; setTimeout(jugarCartaRival,1000);
 }
 
 function jugarCartaRival(){
   if(turno!=='rival') return;
-  let carta = manoRival.splice(Math.floor(Math.random()*manoRival.length),1)[0];
+  let carta=manoRival.splice(Math.floor(Math.random()*manoRival.length),1)[0];
   document.getElementById('mesaR').innerHTML=`<img src="${getImage(carta)}">`;
-  hablar(`Rival jugó su carta`);
-  turno='jugador'; setTimeout(evaluarRonda,1000);
+  reproducirCarta(); hablar(`Rival jugó su carta`);
+  turno='jugador';
+  setTimeout(repartir,1000);
 }
 
-function evaluarRonda(){
-  // Placeholder: sumar puntos por Truco/Envido/Flor
-  repartir();
+// ===== Turno y temporizador =====
+function iniciarTurno(){
+  tiempo=15; document.getElementById('timer').textContent=tiempo;
+  clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    tiempo--; document.getElementById('timer').textContent=tiempo;
+    if(tiempo<=0){ clearInterval(timerInterval); if(turno==='jugador'){ jugarCartaJugador(0);} }
+  },1000);
 }
 
 // ===== Log =====
@@ -200,13 +176,12 @@ document.getElementById('btnIniciar').addEventListener('click',()=>{
   puntajeMax=parseInt(document.getElementById('puntajeMax').value);
   repartir();
 });
-
 document.getElementById('btnMazo').addEventListener('click',()=>{ repartir(); hablar('Me voy al mazo'); });
-document.getElementById('btnTruco').addEventListener('click',()=>{ hablar('Truco'); log('Cantaste Truco'); trucoActivo=true; trucoPuntos=1; });
-document.getElementById('btnRetruco').addEventListener('click',()=>{ hablar('Retruco'); log('Cantaste Retruco'); trucoActivo=true; trucoPuntos=2; });
-document.getElementById('btnValeCuatro').addEventListener('click',()=>{ hablar('Vale cuatro'); log('Cantaste Vale cuatro'); trucoActivo=true; trucoPuntos=3; });
-document.getElementById('btnEnvido').addEventListener('click',()=>{ hablar('Envido'); log('Cantaste Envido'); envidoActivo=true; });
-document.getElementById('btnFlor').addEventListener('click',()=>{ hablar('Flor'); log('Cantaste Flor'); florActivo=true; });
+document.getElementById('btnTruco').addEventListener('click',()=>{ hablar('Truco'); log('Cantaste Truco'); });
+document.getElementById('btnRetruco').addEventListener('click',()=>{ hablar('Retruco'); log('Cantaste Retruco'); });
+document.getElementById('btnValeCuatro').addEventListener('click',()=>{ hablar('Vale cuatro'); log('Cantaste Vale cuatro'); });
+document.getElementById('btnEnvido').addEventListener('click',()=>{ hablar('Envido'); log('Cantaste Envido'); });
+document.getElementById('btnFlor').addEventListener('click',()=>{ hablar('Flor'); log('Cantaste Flor'); });
 document.getElementById('btnQuiero').addEventListener('click',()=>{ hablar('Quiero'); log('Dijiste Quiero'); });
 document.getElementById('btnNoQuiero').addEventListener('click',()=>{ hablar('No quiero'); log('Dijiste No Quiero'); });
 </script>
